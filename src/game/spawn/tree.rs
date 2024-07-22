@@ -54,6 +54,7 @@ fn spawn_tree(
                             ..Default::default()
                         },
                         Overlay,
+                        Tree,
                     ))
                     .id();
                 overlay_storage.set(&tile_pos, tile_entity);

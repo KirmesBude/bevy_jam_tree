@@ -7,6 +7,7 @@ use bevy_ecs_tilemap::prelude::*;
 
 use crate::screen::Screen;
 
+use super::tree::Tree;
 use super::tree::OVERLAY_TEXTURE_INDEX_TREE;
 
 pub(super) fn plugin(app: &mut App) {
@@ -132,6 +133,7 @@ fn spawn_level(
                     ..Default::default()
                 },
                 Overlay,
+                Tree,
             ))
             .id();
         tile_storage.set(&tile_pos, tile_entity);

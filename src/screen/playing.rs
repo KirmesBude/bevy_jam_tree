@@ -4,7 +4,7 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 
 use super::Screen;
 use crate::game::{
-    assets::SoundtrackAssets, audio::soundtrack::PlaySoundtrack, spawn::level::SpawnLevel,
+    assets::SoundtrackAssets, audio::soundtrack::PlaySoundtrack, spawn::level::SpawnLevel, Score,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -18,11 +18,17 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-fn enter_playing(mut commands: Commands, soundtrack_assets: Res<SoundtrackAssets>) {
+fn enter_playing(
+    mut commands: Commands,
+    soundtrack_assets: Res<SoundtrackAssets>,
+    mut score: ResMut<Score>,
+) {
     commands.trigger(SpawnLevel);
     commands.trigger(PlaySoundtrack::Handle(
         soundtrack_assets.gameplay.clone_weak(),
     ));
+
+    score.0 = 0;
 }
 
 fn exit_playing(mut commands: Commands) {

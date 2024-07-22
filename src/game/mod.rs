@@ -1,6 +1,9 @@
 //! Game mechanics and content.
 
 use bevy::prelude::*;
+use spawn::tree::Tree;
+
+use crate::screen::Screen;
 
 mod animation;
 pub mod assets;
@@ -16,4 +19,25 @@ pub(super) fn plugin(app: &mut App) {
         movement::plugin,
         spawn::plugin,
     ));
+
+    app.init_resource::<Score>();
+    app.register_type::<Score>();
+    app.add_systems(
+        Update,
+        (increment_score, game_over).run_if(in_state(Screen::Playing)),
+    );
+}
+
+#[derive(Debug, Default, Resource, Reflect)]
+#[reflect(Resource)]
+pub struct Score(pub usize);
+
+fn increment_score(mut score: ResMut<Score>, query: Query<(), Added<Tree>>) {
+    score.0 += query.iter().count();
+}
+
+fn game_over(mut next_screen: ResMut<NextState<Screen>>, trees: Query<(), With<Tree>>) {
+    if trees.is_empty() {
+        next_screen.set(Screen::GameOver);
+    }
 }
