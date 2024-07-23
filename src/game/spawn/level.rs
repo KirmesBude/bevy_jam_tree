@@ -133,7 +133,7 @@ fn spawn_level(
                     ..Default::default()
                 },
                 Overlay,
-                Tree,
+                Tree::default(),
             ))
             .id();
         tile_storage.set(&tile_pos, tile_entity);

@@ -28,8 +28,27 @@ pub(super) fn plugin(app: &mut App) {
 
 pub const OVERLAY_TEXTURE_INDEX_TREE: u32 = 0;
 
+/// Advances a state each gametick?
+/// Overmature trees will die on next gametick (under specific circumstances?)
 #[derive(Default, Debug, Component, Reflect)]
-pub struct Tree;
+pub enum Tree {
+    #[default]
+    Seedling,
+    Immature,
+    Mature,
+    Overmature,
+}
+
+impl Tree {
+    pub const fn score(&self) -> usize {
+        match self {
+            Tree::Seedling => 0,
+            Tree::Immature => 2,
+            Tree::Mature => 5,
+            Tree::Overmature => 6,
+        }
+    }
+}
 
 #[derive(Debug, Event, PartialEq, Eq, Hash)]
 pub struct SpawnTree(pub TilePos);
@@ -54,7 +73,7 @@ fn spawn_tree(
                             ..Default::default()
                         },
                         Overlay,
-                        Tree,
+                        Tree::default(),
                     ))
                     .id();
                 overlay_storage.set(&tile_pos, tile_entity);
