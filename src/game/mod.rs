@@ -9,7 +9,7 @@ mod animation;
 pub mod assets;
 pub mod audio;
 mod movement;
-mod season;
+pub mod season;
 pub mod spawn;
 
 pub(super) fn plugin(app: &mut App) {
@@ -24,6 +24,8 @@ pub(super) fn plugin(app: &mut App) {
 
     app.init_resource::<Score>();
     app.register_type::<Score>();
+    app.register_type::<RunGameLogic>();
+    app.observe(run_game_logic);
     app.add_systems(
         Update,
         (increment_score, game_over).run_if(in_state(Screen::Playing)),
@@ -42,4 +44,11 @@ fn game_over(mut next_screen: ResMut<NextState<Screen>>, trees: Query<(), With<T
     if trees.is_empty() {
         next_screen.set(Screen::GameOver);
     }
+}
+
+#[derive(Debug, Default, Reflect, Event)]
+pub struct RunGameLogic;
+
+fn run_game_logic(_trigger: Trigger<RunGameLogic>) {
+    println!("Game logic run")
 }

@@ -4,6 +4,7 @@ use bevy_ecs_tilemap::prelude::*;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 use itertools::Itertools;
 
+use crate::game::season::Season;
 use crate::screen::Screen;
 
 use super::level::Overlay;
@@ -18,7 +19,7 @@ pub(super) fn plugin(app: &mut App) {
         (
             update_cursor_pos,
             spawn_tree_at_cursor,
-            tree_game_of_life,
+            //tree_game_of_life,
             spawn_tree,
             despawn_tree,
         )
@@ -178,8 +179,9 @@ fn spawn_tree_at_cursor(
     mouse_input: Res<ButtonInput<MouseButton>>,
     cursor_pos: Res<CursorPos>,
     tilemap_q: Query<(&TilemapSize, &TilemapGridSize, &TilemapType, &Transform), With<Overlay>>,
+    mut season: ResMut<Season>,
 ) {
-    if mouse_input.just_pressed(MouseButton::Left) {
+    if season.user_action_resource > 0 && mouse_input.just_pressed(MouseButton::Left) {
         let (map_size, grid_size, map_type, map_transform) = tilemap_q.single();
 
         // Grab the cursor position from the `Res<CursorPos>`
@@ -198,5 +200,7 @@ fn spawn_tree_at_cursor(
         {
             spawn_tree_events.send(SpawnTree(tile_pos));
         }
+
+        season.user_action_resource -= 1;
     }
 }
