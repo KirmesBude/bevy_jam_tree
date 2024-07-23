@@ -199,8 +199,7 @@ fn spawn_tree_at_cursor(
             TilePos::from_world_pos(&cursor_in_map_pos, map_size, grid_size, map_type)
         {
             spawn_tree_events.send(SpawnTree(tile_pos));
+            season.user_action_resource -= 1; /* TODO: I don't check whether it is occupied here, so may lose resource without placing a tree */
         }
-
-        season.user_action_resource -= 1;
     }
 }

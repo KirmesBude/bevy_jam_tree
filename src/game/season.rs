@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
+use bevy_ecs_tilemap::tiles::{TilePos, TileStorage, TileTextureIndex};
 
 use crate::screen::Screen;
 
@@ -110,15 +110,14 @@ fn advance_season(
     mut season: ResMut<Season>,
 ) {
     /* Season is finished when no more SeasonTransition components exist*/
-
     if *active {
         if transitions.is_empty() {
             *season = Season {
                 kind: season.kind.next(),
                 ..default()
             };
+            *active = false;
         }
-        *active = false;
     } else {
         /* Need to have seen one first to activate */
         *active = !transitions.is_empty();
@@ -128,11 +127,12 @@ fn advance_season(
 fn tick_transition_timer(
     mut commands: Commands,
     time: Res<Time>,
-    mut transition_timers: Query<(Entity, &mut SeasonTransition)>,
+    mut transition_timers: Query<(Entity, &mut SeasonTransition, &mut TileTextureIndex)>,
 ) {
-    for (entity, mut transition_timer) in &mut transition_timers {
+    for (entity, mut transition_timer, mut texture_index) in &mut transition_timers {
         if transition_timer.timer.tick(time.delta()).just_finished() {
             /* Actually do something interesting, like change texture index */
+            texture_index.0 = (texture_index.0 + 1) % 4;
 
             commands.entity(entity).remove::<SeasonTransition>();
         }
