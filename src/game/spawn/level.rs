@@ -29,16 +29,12 @@ fn spawn_level(
     // but add things like walls etc. here.
     //commands.trigger(SpawnPlayer);
 
-    let texture_handle: Handle<Image> = asset_server.load("iso_color.png");
+    let texture_handle: Handle<Image> = asset_server.load("images/ground_tileset.png");
 
     // In total, there will be `(QUADRANT_SIDE_LENGTH * 2) * (QUADRANT_SIDE_LENGTH * 2)` tiles.
     let map_size = TilemapSize {
         x: QUADRANT_SIDE_LENGTH * 2,
         y: QUADRANT_SIDE_LENGTH * 2,
-    };
-    let quadrant_size = TilemapSize {
-        x: QUADRANT_SIDE_LENGTH,
-        y: QUADRANT_SIDE_LENGTH,
     };
     let mut tile_storage = TileStorage::empty(map_size);
     let tilemap_entity = commands.spawn_empty().id();
@@ -47,50 +43,14 @@ fn spawn_level(
     fill_tilemap_rect(
         TileTextureIndex(0),
         TilePos { x: 0, y: 0 },
-        quadrant_size,
+        map_size,
         tilemap_id,
         &mut commands,
         &mut tile_storage,
     );
 
-    fill_tilemap_rect(
-        TileTextureIndex(1),
-        TilePos {
-            x: QUADRANT_SIDE_LENGTH,
-            y: 0,
-        },
-        quadrant_size,
-        tilemap_id,
-        &mut commands,
-        &mut tile_storage,
-    );
-
-    fill_tilemap_rect(
-        TileTextureIndex(2),
-        TilePos {
-            x: 0,
-            y: QUADRANT_SIDE_LENGTH,
-        },
-        quadrant_size,
-        tilemap_id,
-        &mut commands,
-        &mut tile_storage,
-    );
-
-    fill_tilemap_rect(
-        TileTextureIndex(3),
-        TilePos {
-            x: QUADRANT_SIDE_LENGTH,
-            y: QUADRANT_SIDE_LENGTH,
-        },
-        quadrant_size,
-        tilemap_id,
-        &mut commands,
-        &mut tile_storage,
-    );
-
-    let tile_size = TilemapTileSize { x: 64.0, y: 32.0 };
-    let grid_size = tile_size.into();
+    let tile_size = TilemapTileSize { x: 64.0, y: 48.0 };
+    let grid_size = TilemapGridSize { x: 64.0, y: 32.0 };
     let map_type = TilemapType::Isometric(IsoCoordSystem::Diamond);
 
     commands.entity(tilemap_entity).insert((
