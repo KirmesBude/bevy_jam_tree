@@ -39,6 +39,15 @@ impl SeasonKind {
             SeasonKind::Winter => SeasonKind::Spring,
         }
     }
+
+    pub fn texture_index(&self) -> u32 {
+        match self {
+            SeasonKind::Spring => 0,
+            SeasonKind::Summer => 1,
+            SeasonKind::Autumn => 2,
+            SeasonKind::Winter => 3,
+        }
+    }
 }
 
 #[derive(Debug, Reflect, Resource)]
@@ -129,10 +138,10 @@ fn tick_transition_timer(
     time: Res<Time>,
     mut transition_timers: Query<(Entity, &mut SeasonTransition, &mut TileTextureIndex)>,
 ) {
-    for (entity, mut transition_timer, mut texture_index) in &mut transition_timers {
-        if transition_timer.timer.tick(time.delta()).just_finished() {
+    for (entity, mut season_transition, mut texture_index) in &mut transition_timers {
+        if season_transition.timer.tick(time.delta()).just_finished() {
             /* Actually do something interesting, like change texture index */
-            texture_index.0 = (texture_index.0 + 1) % 4;
+            texture_index.0 = season_transition.season_kind.texture_index();
 
             commands.entity(entity).remove::<SeasonTransition>();
         }

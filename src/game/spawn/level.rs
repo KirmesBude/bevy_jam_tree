@@ -75,7 +75,7 @@ fn spawn_level(
 
     // Overlay tilemap
     //
-    let texture_handle: Handle<Image> = asset_server.load("tree.png");
+    let texture_handle: Handle<Image> = asset_server.load("images/tree_tileset.png");
 
     let mut tile_storage = TileStorage::empty(map_size);
     let tilemap_entity = commands.spawn_empty().id();
@@ -99,8 +99,8 @@ fn spawn_level(
         tile_storage.set(&tile_pos, tile_entity);
     });
 
-    let tile_size = TilemapTileSize { x: 64.0, y: 96.0 };
-    let grid_size = TilemapGridSize { x: 64.0, y: 32.0 };
+    let tile_size = TilemapTileSize { x: 64.0, y: 112.0 };
+    let grid_size = TilemapGridSize { x: 64.0, y: 96.0 };
     let map_type = TilemapType::Isometric(IsoCoordSystem::Diamond);
 
     commands.entity(tilemap_entity).insert((
