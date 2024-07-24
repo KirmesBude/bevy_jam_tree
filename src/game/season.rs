@@ -66,7 +66,7 @@ impl Default for Season {
             active: false,
             timer: Timer::from_seconds(10.0, TimerMode::Once),
             kind: SeasonKind::Spring,
-            user_action_resource: 1,
+            user_action_resource: 4,
         }
     }
 }
@@ -137,13 +137,28 @@ fn advance_season(
 fn tick_transition_timer(
     mut commands: Commands,
     time: Res<Time>,
-    mut transition_timers: Query<(Entity, &mut SeasonTransition, &mut TileTextureIndex, &Tree)>,
+    mut transition_timers: Query<(
+        Entity,
+        &mut SeasonTransition,
+        &mut TileTextureIndex,
+        Option<&Tree>,
+    )>,
 ) {
     for (entity, mut season_transition, mut texture_index, tree) in &mut transition_timers {
         if season_transition.timer.tick(time.delta()).just_finished() {
             /* Actually do something interesting, like change texture index */
-            texture_index.0 =
-                season_transition.season_kind.texture_index() + tree.texture_index_offset();
+            let offset = if let Some(tree) = tree {
+                tree.texture_index_offset()
+            } else {
+                0
+            };
+            texture_index.0 = season_transition.season_kind.texture_index() + offset;
+            println!(
+                "{:?}, {:?}, {:?}",
+                tree,
+                offset,
+                season_transition.season_kind.texture_index()
+            );
 
             commands.entity(entity).remove::<SeasonTransition>();
         }

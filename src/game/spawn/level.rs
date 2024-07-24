@@ -18,23 +18,28 @@ pub(super) fn plugin(app: &mut App) {
 #[derive(Event, Debug)]
 pub struct SpawnLevel;
 
-const QUADRANT_SIDE_LENGTH: u32 = 4;
+#[derive(Debug, Default, Component, Reflect)]
+pub struct GroundLayer;
+
+#[derive(Debug, Default, Component, Reflect)]
+pub struct TreeLayer;
+
+#[derive(Debug, Default, Component, Reflect)]
+pub struct EffectLayer;
+
+const MAP_SIZE: u32 = 8;
 
 fn spawn_level(
     _trigger: Trigger<SpawnLevel>,
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    // The only thing we have in our level is a player,
-    // but add things like walls etc. here.
-    //commands.trigger(SpawnPlayer);
-
+    // GroundLayer
     let texture_handle: Handle<Image> = asset_server.load("images/ground_tileset.png");
 
-    // In total, there will be `(QUADRANT_SIDE_LENGTH * 2) * (QUADRANT_SIDE_LENGTH * 2)` tiles.
     let map_size = TilemapSize {
-        x: QUADRANT_SIDE_LENGTH * 2,
-        y: QUADRANT_SIDE_LENGTH * 2,
+        x: MAP_SIZE,
+        y: MAP_SIZE,
     };
     let mut tile_storage = TileStorage::empty(map_size);
     let tilemap_entity = commands.spawn_empty().id();
@@ -49,11 +54,12 @@ fn spawn_level(
         &mut tile_storage,
     );
 
-    let tile_size = TilemapTileSize { x: 64.0, y: 48.0 };
+    let tile_size = TilemapTileSize { x: 64.0, y: 112.0 };
     let grid_size = TilemapGridSize { x: 64.0, y: 32.0 };
     let map_type = TilemapType::Isometric(IsoCoordSystem::Diamond);
 
     commands.entity(tilemap_entity).insert((
+        Name::new("GroundLayer"),
         TilemapBundle {
             grid_size,
             size: map_size,
@@ -62,19 +68,17 @@ fn spawn_level(
             tile_size,
             map_type,
             render_settings: TilemapRenderSettings {
-                // Map size is 12x12 so we'll have render chunks that are:
-                // 12 tiles wide and 1 tile tall.
-                render_chunk_size: UVec2::new(3, 1),
+                render_chunk_size: UVec2::new(MAP_SIZE, 1),
                 y_sort: true,
             },
             transform: get_tilemap_center_transform(&map_size, &grid_size, &map_type, 0.0),
             ..Default::default()
         },
         StateScoped(Screen::Playing),
+        GroundLayer,
     ));
 
-    // Overlay tilemap
-    //
+    // Tree Layer
     let texture_handle: Handle<Image> = asset_server.load("images/tree_tileset.png");
 
     let mut tile_storage = TileStorage::empty(map_size);
@@ -92,7 +96,6 @@ fn spawn_level(
                     texture_index: TileTextureIndex(OVERLAY_TEXTURE_INDEX_TREE),
                     ..Default::default()
                 },
-                Overlay,
                 Tree::default(),
             ))
             .id();
@@ -100,10 +103,11 @@ fn spawn_level(
     });
 
     let tile_size = TilemapTileSize { x: 64.0, y: 112.0 };
-    let grid_size = TilemapGridSize { x: 64.0, y: 96.0 };
+    let grid_size = TilemapGridSize { x: 64.0, y: 32.0 };
     let map_type = TilemapType::Isometric(IsoCoordSystem::Diamond);
 
     commands.entity(tilemap_entity).insert((
+        Name::new("TreeLayer"),
         TilemapBundle {
             grid_size,
             size: map_size,
@@ -112,18 +116,13 @@ fn spawn_level(
             tile_size,
             map_type,
             render_settings: TilemapRenderSettings {
-                // Map size is 12x12 so we'll have render chunks that are:
-                // 12 tiles wide and 1 tile tall.
-                render_chunk_size: UVec2::new(3, 1),
+                render_chunk_size: UVec2::new(MAP_SIZE, 1),
                 y_sort: true,
             },
             transform: get_tilemap_center_transform(&map_size, &grid_size, &map_type, 1.0),
             ..Default::default()
         },
-        Overlay,
+        TreeLayer,
         StateScoped(Screen::Playing),
     ));
 }
-
-#[derive(Debug, Default, Component)]
-pub struct Overlay;
