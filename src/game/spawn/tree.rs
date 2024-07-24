@@ -262,7 +262,9 @@ fn update_hovered_tile_touch(
                             map_type,
                         );
 
-                        *hovered_tile = HoveredTile { tile_pos };
+                        if tile_pos.is_some() {
+                            *hovered_tile = HoveredTile { tile_pos };
+                        }
                     }
                 }
             }
