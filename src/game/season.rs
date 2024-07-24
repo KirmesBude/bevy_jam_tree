@@ -3,6 +3,7 @@ use bevy_ecs_tilemap::tiles::{TilePos, TileStorage, TileTextureIndex};
 
 use crate::screen::Screen;
 
+use super::spawn::tree::Tree;
 use super::RunGameLogic;
 
 pub(super) fn plugin(app: &mut App) {
@@ -55,7 +56,7 @@ impl SeasonKind {
 pub struct Season {
     active: bool,
     timer: Timer,
-    kind: SeasonKind,
+    pub kind: SeasonKind,
     pub user_action_resource: usize,
 }
 
@@ -136,12 +137,13 @@ fn advance_season(
 fn tick_transition_timer(
     mut commands: Commands,
     time: Res<Time>,
-    mut transition_timers: Query<(Entity, &mut SeasonTransition, &mut TileTextureIndex)>,
+    mut transition_timers: Query<(Entity, &mut SeasonTransition, &mut TileTextureIndex, &Tree)>,
 ) {
-    for (entity, mut season_transition, mut texture_index) in &mut transition_timers {
+    for (entity, mut season_transition, mut texture_index, tree) in &mut transition_timers {
         if season_transition.timer.tick(time.delta()).just_finished() {
             /* Actually do something interesting, like change texture index */
-            texture_index.0 = season_transition.season_kind.texture_index();
+            texture_index.0 =
+                season_transition.season_kind.texture_index() + tree.texture_index_offset();
 
             commands.entity(entity).remove::<SeasonTransition>();
         }

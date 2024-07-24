@@ -31,7 +31,7 @@ pub const OVERLAY_TEXTURE_INDEX_TREE: u32 = 0;
 
 /// Advances a state each gametick?
 /// Overmature trees will die on next gametick (under specific circumstances?)
-#[derive(Default, Debug, Component, Reflect)]
+#[derive(Default, Debug, Component, Reflect, PartialEq, Eq, Hash)]
 pub enum Tree {
     #[default]
     Seedling,
@@ -49,19 +49,32 @@ impl Tree {
             Tree::Overmature => 6,
         }
     }
+
+    pub const fn texture_index_offset(&self) -> u32 {
+        match self {
+            Tree::Seedling => 0,
+            Tree::Immature => 4,
+            Tree::Mature => 8,
+            Tree::Overmature => 12,
+        }
+    }
 }
 
 #[derive(Debug, Event, PartialEq, Eq, Hash)]
-pub struct SpawnTree(pub TilePos);
+pub struct SpawnTree {
+    pub tile_pos: TilePos,
+    pub tree: Tree,
+}
 
 fn spawn_tree(
     mut commands: Commands,
     mut spawn_tree_events: EventReader<SpawnTree>,
     mut overlay_map: Query<(Entity, &mut TileStorage), With<Overlay>>,
+    season: Res<Season>,
 ) {
     let (overlay_entity, mut overlay_storage) = overlay_map.single_mut();
     for event in spawn_tree_events.read().unique() {
-        let tile_pos = event.0;
+        let tile_pos = event.tile_pos;
         if overlay_storage.checked_get(&tile_pos).is_none() {
             let tilemap_id = TilemapId(overlay_entity);
             commands.entity(overlay_entity).with_children(|parent| {
@@ -70,7 +83,9 @@ fn spawn_tree(
                         TileBundle {
                             position: tile_pos,
                             tilemap_id,
-                            texture_index: TileTextureIndex(OVERLAY_TEXTURE_INDEX_TREE),
+                            texture_index: TileTextureIndex(
+                                season.kind.texture_index() + event.tree.texture_index_offset(),
+                            ),
                             ..Default::default()
                         },
                         Overlay,
@@ -90,7 +105,7 @@ fn despawn_tree(
 ) {
     let mut overlay_storage = overlay_map.single_mut();
     for event in despawn_tree_events.read().unique() {
-        let tile_pos = event.0;
+        let tile_pos = event.tile_pos;
 
         if let Some(entity) = overlay_storage.checked_get(&tile_pos) {
             commands.entity(entity).despawn_recursive();
@@ -100,7 +115,9 @@ fn despawn_tree(
 }
 
 #[derive(Debug, Event, PartialEq, Eq, Hash)]
-pub struct DespawnTree(pub TilePos);
+pub struct DespawnTree {
+    pub tile_pos: TilePos,
+}
 
 fn tree_game_of_life(
     time: Res<Time>,
@@ -130,13 +147,16 @@ fn tree_game_of_life(
                     Some(_) => {
                         /* Live tree */
                         if !(2..=3).contains(&neighbor_count) {
-                            despawn_tree_events.send(DespawnTree(tile_pos));
+                            despawn_tree_events.send(DespawnTree { tile_pos });
                         }
                     }
                     None => {
                         /* Dead tree */
                         if neighbor_count == 3 {
-                            spawn_tree_events.send(SpawnTree(tile_pos));
+                            spawn_tree_events.send(SpawnTree {
+                                tile_pos,
+                                tree: Tree::Seedling,
+                            });
                         }
                     }
                 }
@@ -198,7 +218,10 @@ fn spawn_tree_at_cursor(
         if let Some(tile_pos) =
             TilePos::from_world_pos(&cursor_in_map_pos, map_size, grid_size, map_type)
         {
-            spawn_tree_events.send(SpawnTree(tile_pos));
+            spawn_tree_events.send(SpawnTree {
+                tile_pos,
+                tree: Tree::Immature,
+            });
             season.user_action_resource -= 1; /* TODO: I don't check whether it is occupied here, so may lose resource without placing a tree */
         }
     }
