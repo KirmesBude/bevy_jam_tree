@@ -1,0 +1,2 @@
+- Implement SelectedTile based on MotionInput. Add new interactable button to actually spawn tree.
+- Implement per season start and end logic (e.g. growing/dieing)
