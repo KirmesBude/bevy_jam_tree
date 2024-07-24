@@ -1,2 +1,2 @@
-- Implement SelectedTile based on MotionInput. Add new interactable button to actually spawn tree.
+- Update left click to log in selected tile.
 - Implement per season start and end logic (e.g. growing/dieing)

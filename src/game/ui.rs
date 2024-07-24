@@ -4,10 +4,12 @@ use bevy::ui::Val::*;
 use bevy_ecs_tilemap::tiles::TileStorage;
 
 use crate::screen::Screen;
+use crate::ui::palette::{BUTTON_HOVERED_BACKGROUND, BUTTON_PRESSED_BACKGROUND, NODE_BACKGROUND};
+use crate::ui::prelude::{InteractionPalette, InteractionQuery};
 
 use super::season::Season;
 use super::spawn::level::{GroundLayer, TreeLayer};
-use super::spawn::tree::{HoveredTile, Tree};
+use super::spawn::tree::{HoveredTile, SpawnTree, Tree};
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_game_ui);
@@ -20,6 +22,8 @@ pub(super) fn plugin(app: &mut App) {
             update_season_header,
             update_season_clock,
             update_season_description,
+            update_season_action,
+            handle_season_action,
         )
             .run_if(in_state(Screen::Playing)),
     );
@@ -249,6 +253,7 @@ fn right_ui_root(parent: &mut ChildBuilder) {
             season_header_ui(parent);
             season_clock_ui(parent);
             season_description_ui(parent);
+            season_action_ui(parent);
         });
 }
 
@@ -345,7 +350,7 @@ fn season_description_ui(parent: &mut ChildBuilder) {
             NodeBundle {
                 style: Style {
                     width: Percent(100.0),
-                    height: Percent(60.0),
+                    height: Percent(40.0),
                     ..default()
                 },
                 background_color: BackgroundColor(WHITE.into()),
@@ -354,9 +359,50 @@ fn season_description_ui(parent: &mut ChildBuilder) {
         ))
         .with_children(|parent| {
             parent.spawn((
+                TextBundle::from_section(
+                    "Season Description",
+                    TextStyle {
+                        font_size: 40.0,
+                        color: BLACK.into(),
+                        ..default()
+                    },
+                ),
+                SeasonDescriptionUi,
+            ));
+        });
+}
+
+fn update_season_description(
+    season: Res<Season>,
+    mut season_description_texts: Query<&mut Text, With<SeasonDescriptionUi>>,
+) {
+    for mut text in &mut season_description_texts {
+        text.sections[0].value = season.kind.description().into();
+    }
+}
+
+#[derive(Debug, Component, Reflect)]
+pub struct SeasonActionUi;
+
+fn season_action_ui(parent: &mut ChildBuilder) {
+    parent
+        .spawn((
+            Name::new("Season Action UI"),
+            NodeBundle {
+                style: Style {
+                    width: Percent(100.0),
+                    height: Percent(20.0),
+                    ..default()
+                },
+                background_color: BackgroundColor(BROWN.into()),
+                ..default()
+            },
+        ))
+        .with_children(|parent| {
+            parent.spawn((
                 TextBundle::from_sections([
                     TextSection {
-                        value: "Season Description".into(),
+                        value: "Action".into(),
                         style: TextStyle {
                             font_size: 40.0,
                             color: BLACK.into(),
@@ -372,17 +418,54 @@ fn season_description_ui(parent: &mut ChildBuilder) {
                         },
                     },
                 ]),
-                SeasonDescriptionUi,
+                SeasonActionUi,
+            ));
+            parent.spawn((
+                ButtonBundle {
+                    style: Style {
+                        width: Percent(95.0),
+                        height: Px(95.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    background_color: BackgroundColor(NODE_BACKGROUND),
+                    ..default()
+                },
+                InteractionPalette {
+                    none: NODE_BACKGROUND,
+                    hovered: BUTTON_HOVERED_BACKGROUND,
+                    pressed: BUTTON_PRESSED_BACKGROUND,
+                },
+                SeasonActionUi,
             ));
         });
 }
 
-fn update_season_description(
+fn update_season_action(
     season: Res<Season>,
-    mut season_description_texts: Query<&mut Text, With<SeasonDescriptionUi>>,
+    mut season_action_texts: Query<&mut Text, With<SeasonActionUi>>,
 ) {
-    for mut text in &mut season_description_texts {
-        text.sections[0].value = season.kind.description().into();
-        text.sections[1].value = format!("\nResources: {}", season.user_action_resource);
+    for mut text in &mut season_action_texts {
+        text.sections[0].value = format!("\n{}", season.user_action_resource);
+    }
+}
+
+fn handle_season_action(
+    mut button_query: InteractionQuery<&SeasonActionUi>,
+    hovered_tile: Res<HoveredTile>,
+    mut season: ResMut<Season>,
+    mut spawn_tree_events: EventWriter<SpawnTree>,
+) {
+    for (interaction, _action) in &mut button_query {
+        if matches!(interaction, Interaction::Pressed) && season.user_action_resource > 0 {
+            if let Some(tile_pos) = hovered_tile.tile_pos {
+                spawn_tree_events.send(SpawnTree {
+                    tile_pos,
+                    tree: Tree::Immature,
+                });
+                season.user_action_resource -= 1; /* TODO: I don't check whether it is occupied here, so may lose resource without placing a tree */
+            }
+        }
     }
 }
