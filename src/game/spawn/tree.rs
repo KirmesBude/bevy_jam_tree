@@ -14,11 +14,13 @@ pub(super) fn plugin(app: &mut App) {
     app.register_type::<Tree>();
     app.add_event::<SpawnTree>();
     app.add_event::<DespawnTree>();
-    app.init_resource::<CursorPos>();
+    app.register_type::<HoveredTile>();
+    app.init_resource::<HoveredTile>();
     app.add_systems(
         Update,
         (
             update_cursor_pos,
+            update_hovered_tile_touch,
             spawn_tree_at_cursor,
             //tree_game_of_life,
             spawn_tree,
@@ -175,27 +177,17 @@ fn tree_game_of_life(
     }
 }
 
-#[derive(Resource)]
-pub struct CursorPos {
-    world_position: Vec2,
+#[derive(Default, Debug, Resource, Reflect)]
+#[reflect(Resource)]
+pub struct HoveredTile {
     pub tile_pos: Option<TilePos>,
-}
-impl Default for CursorPos {
-    fn default() -> Self {
-        // Initialize the cursor pos at some far away place. It will get updated
-        // correctly when the cursor moves.
-        Self {
-            world_position: Vec2::new(-1000.0, -1000.0),
-            tile_pos: None,
-        }
-    }
 }
 
 // We need to keep the cursor position updated based on any `CursorMoved` events.
 pub fn update_cursor_pos(
     camera_q: Query<(&GlobalTransform, &Camera)>,
     mut cursor_moved_events: EventReader<CursorMoved>,
-    mut cursor_pos: ResMut<CursorPos>,
+    mut cursor_pos: ResMut<HoveredTile>,
     tilemap_q: Query<(&TilemapSize, &TilemapGridSize, &TilemapType, &Transform), With<GroundLayer>>,
 ) {
     for cursor_moved in cursor_moved_events.read() {
@@ -223,11 +215,58 @@ pub fn update_cursor_pos(
                 let tile_pos =
                     TilePos::from_world_pos(&cursor_in_map_pos, map_size, grid_size, map_type);
 
-                *cursor_pos = CursorPos {
-                    world_position: cursor_world_position,
-                    tile_pos,
-                };
+                *cursor_pos = HoveredTile { tile_pos };
             }
+        }
+    }
+}
+
+fn update_hovered_tile_touch(
+    mut hovered_tile: ResMut<HoveredTile>,
+    mut touch_events: EventReader<TouchInput>,
+    camera_q: Query<(&GlobalTransform, &Camera)>,
+    tilemap_q: Query<(&TilemapSize, &TilemapGridSize, &TilemapType, &Transform), With<GroundLayer>>,
+) {
+    for touch_event in touch_events.read() {
+        match touch_event.phase {
+            bevy::input::touch::TouchPhase::Started
+            | bevy::input::touch::TouchPhase::Moved
+            | bevy::input::touch::TouchPhase::Ended => {
+                // To get the mouse's world position, we have to transform its window position by
+                // any transforms on the camera. This is done by projecting the cursor position into
+                // camera space (world space).
+                for (cam_t, cam) in camera_q.iter() {
+                    if let Some(cursor_world_position) =
+                        cam.viewport_to_world_2d(cam_t, touch_event.position)
+                    {
+                        let (map_size, grid_size, map_type, map_transform) = tilemap_q.single();
+
+                        // We need to make sure that the cursor's world position is correct relative to the map
+                        // due to any map transformation.
+                        let cursor_in_map_pos = {
+                            // Extend the cursor_pos vec2 by 0.0 and 1.0
+                            let cursor_world_position =
+                                Vec4::from((cursor_world_position, 0.0, 1.0));
+                            let cursor_in_map_pos =
+                                map_transform.compute_matrix().inverse() * cursor_world_position;
+                            cursor_in_map_pos.xy()
+                        };
+                        // TODO: Not sure why this is necessary
+                        let cursor_in_map_pos =
+                            cursor_in_map_pos + Vec2::new(0.0, grid_size.y / 2.0);
+                        // Once we have a world position we can transform it into a possible tile position.
+                        let tile_pos = TilePos::from_world_pos(
+                            &cursor_in_map_pos,
+                            map_size,
+                            grid_size,
+                            map_type,
+                        );
+
+                        *hovered_tile = HoveredTile { tile_pos };
+                    }
+                }
+            }
+            bevy::input::touch::TouchPhase::Canceled => continue,
         }
     }
 }
@@ -236,7 +275,7 @@ pub fn update_cursor_pos(
 fn spawn_tree_at_cursor(
     mut spawn_tree_events: EventWriter<SpawnTree>,
     mouse_input: Res<ButtonInput<MouseButton>>,
-    cursor_pos: Res<CursorPos>,
+    cursor_pos: Res<HoveredTile>,
     mut season: ResMut<Season>,
 ) {
     if season.user_action_resource > 0 && mouse_input.just_pressed(MouseButton::Left) {
@@ -251,7 +290,7 @@ fn spawn_tree_at_cursor(
 }
 
 fn highlight_tile(
-    cursor_pos: Res<CursorPos>,
+    cursor_pos: Res<HoveredTile>,
     tile_storages: Query<&TileStorage>,
     mut tile_colors: Query<&mut TileColor>,
 ) {

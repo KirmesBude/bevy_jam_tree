@@ -7,7 +7,7 @@ use crate::screen::Screen;
 
 use super::season::Season;
 use super::spawn::level::{GroundLayer, TreeLayer};
-use super::spawn::tree::{CursorPos, Tree};
+use super::spawn::tree::{HoveredTile, Tree};
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_game_ui);
@@ -121,7 +121,7 @@ fn selected_tile_tree_ui(parent: &mut ChildBuilder) {
 fn update_selected_tree(
     mut selected_tree_texts: Query<&mut Text, With<SelectedTileTreeUi>>,
     season: Res<Season>,
-    cursor: Res<CursorPos>,
+    cursor: Res<HoveredTile>,
     tree_tile_storage: Query<&TileStorage, With<TreeLayer>>,
     trees: Query<&Tree>,
 ) {
@@ -184,7 +184,7 @@ fn selected_tile_ground_ui(parent: &mut ChildBuilder) {
 fn update_selected_ground(
     mut selected_ground_texts: Query<&mut Text, With<SelectedTileGroundUi>>,
     season: Res<Season>,
-    cursor: Res<CursorPos>,
+    cursor: Res<HoveredTile>,
     ground_tile_storage: Query<&TileStorage, With<GroundLayer>>, /*, ground: Query<&Ground> */
 ) {
     // Do we have anything selected?
