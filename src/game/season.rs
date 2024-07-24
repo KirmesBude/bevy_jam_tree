@@ -25,10 +25,10 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(Clone, Copy, Debug, Reflect)]
 pub enum SeasonKind {
-    Spring, /* User action: Plant seeds; Passive effect: No trees die */
-    Summer, /* User action: Place/combat(?) wildfires; Passive effects: Accelerated growth, random new trees */
-    Autumn, /* User action: Wind direction?; Passive effect: Trees multiply */
-    Winter, /* User action: AoE Heavy Snowfall(No trees are felled there); Passive effect: Trees are felled (mature/overmature) */
+    Spring,
+    Summer,
+    Autumn,
+    Winter,
 }
 
 impl SeasonKind {
@@ -49,13 +49,31 @@ impl SeasonKind {
             SeasonKind::Winter => 3,
         }
     }
+
+    pub fn header(&self) -> &'static str {
+        match self {
+            SeasonKind::Spring => "Spring",
+            SeasonKind::Summer => "Summer",
+            SeasonKind::Autumn => "Autumn",
+            SeasonKind::Winter => "Winter",
+        }
+    }
+
+    pub fn description(&self) -> &'static str {
+        match self {
+            SeasonKind::Spring => "User action: Plant seeds; Passive effect: No trees die",
+            SeasonKind::Summer => "User action: Place/combat(?) wildfires; Passive effects: Accelerated growth, random new trees",
+            SeasonKind::Autumn => "User action: Wind direction?; Passive effect: Trees multiply",
+            SeasonKind::Winter => "User action: AoE Heavy Snowfall(No trees are felled there); Passive effect: Trees are felled (mature/overmature)",
+        }
+    }
 }
 
 #[derive(Debug, Reflect, Resource)]
 #[reflect(Resource)]
 pub struct Season {
-    active: bool,
-    timer: Timer,
+    pub active: bool,
+    pub timer: Timer,
     pub kind: SeasonKind,
     pub user_action_resource: usize,
 }

@@ -60,6 +60,15 @@ impl Tree {
             Tree::Overmature => 12,
         }
     }
+
+    pub fn name(&self) -> &'static str {
+        match self {
+            Tree::Seedling => "Seedling",
+            Tree::Immature => "Immature",
+            Tree::Mature => "Mature",
+            Tree::Overmature => "Overmature",
+        }
+    }
 }
 
 #[derive(Debug, Event, PartialEq, Eq, Hash)]
@@ -169,7 +178,7 @@ fn tree_game_of_life(
 #[derive(Resource)]
 pub struct CursorPos {
     world_position: Vec2,
-    tile_pos: Option<TilePos>,
+    pub tile_pos: Option<TilePos>,
 }
 impl Default for CursorPos {
     fn default() -> Self {

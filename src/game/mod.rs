@@ -11,6 +11,7 @@ pub mod audio;
 mod movement;
 pub mod season;
 pub mod spawn;
+pub mod ui;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
@@ -20,6 +21,7 @@ pub(super) fn plugin(app: &mut App) {
         movement::plugin,
         spawn::plugin,
         season::plugin,
+        ui::plugin,
     ));
 
     app.init_resource::<Score>();

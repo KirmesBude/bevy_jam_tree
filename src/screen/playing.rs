@@ -5,7 +5,7 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use super::Screen;
 use crate::game::{
     assets::SoundtrackAssets, audio::soundtrack::PlaySoundtrack, season::Season,
-    spawn::level::SpawnLevel, Score,
+    spawn::level::SpawnLevel, ui::SpawnGameUi, Score,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -25,6 +25,7 @@ fn enter_playing(
     mut score: ResMut<Score>,
     mut season: ResMut<Season>,
 ) {
+    commands.trigger(SpawnGameUi);
     commands.trigger(SpawnLevel);
     commands.trigger(PlaySoundtrack::Handle(
         soundtrack_assets.gameplay.clone_weak(),
