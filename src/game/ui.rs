@@ -392,6 +392,8 @@ fn season_action_ui(parent: &mut ChildBuilder) {
                 style: Style {
                     width: Percent(100.0),
                     height: Percent(20.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
                     ..default()
                 },
                 background_color: BackgroundColor(BROWN.into()),
@@ -399,46 +401,49 @@ fn season_action_ui(parent: &mut ChildBuilder) {
             },
         ))
         .with_children(|parent| {
-            parent.spawn((
-                TextBundle::from_sections([
-                    TextSection {
-                        value: "Action".into(),
-                        style: TextStyle {
-                            font_size: 40.0,
-                            color: BLACK.into(),
+            parent
+                .spawn((
+                    ButtonBundle {
+                        style: Style {
+                            width: Percent(95.0),
+                            height: Percent(95.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
                             ..default()
                         },
-                    },
-                    TextSection {
-                        value: "Season Resources".into(),
-                        style: TextStyle {
-                            font_size: 40.0,
-                            color: BLACK.into(),
-                            ..default()
-                        },
-                    },
-                ]),
-                SeasonActionUi,
-            ));
-            parent.spawn((
-                ButtonBundle {
-                    style: Style {
-                        width: Percent(95.0),
-                        height: Px(95.0),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
+                        background_color: BackgroundColor(NODE_BACKGROUND),
                         ..default()
                     },
-                    background_color: BackgroundColor(NODE_BACKGROUND),
-                    ..default()
-                },
-                InteractionPalette {
-                    none: NODE_BACKGROUND,
-                    hovered: BUTTON_HOVERED_BACKGROUND,
-                    pressed: BUTTON_PRESSED_BACKGROUND,
-                },
-                SeasonActionUi,
-            ));
+                    InteractionPalette {
+                        none: NODE_BACKGROUND,
+                        hovered: BUTTON_HOVERED_BACKGROUND,
+                        pressed: BUTTON_PRESSED_BACKGROUND,
+                    },
+                    SeasonActionUi,
+                ))
+                .with_children(|parent| {
+                    parent.spawn((
+                        TextBundle::from_sections([
+                            TextSection {
+                                value: "Action".into(),
+                                style: TextStyle {
+                                    font_size: 40.0,
+                                    color: BLACK.into(),
+                                    ..default()
+                                },
+                            },
+                            TextSection {
+                                value: "Season Resources".into(),
+                                style: TextStyle {
+                                    font_size: 40.0,
+                                    color: BLACK.into(),
+                                    ..default()
+                                },
+                            },
+                        ]),
+                        SeasonActionUi,
+                    ));
+                });
         });
 }
 
@@ -447,7 +452,7 @@ fn update_season_action(
     mut season_action_texts: Query<&mut Text, With<SeasonActionUi>>,
 ) {
     for mut text in &mut season_action_texts {
-        text.sections[0].value = format!("\n{}", season.user_action_resource);
+        text.sections[1].value = format!("\n{} Left", season.user_action_resource);
     }
 }
 
