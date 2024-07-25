@@ -8,8 +8,8 @@ use crate::ui::palette::{BUTTON_HOVERED_BACKGROUND, BUTTON_PRESSED_BACKGROUND, N
 use crate::ui::prelude::{InteractionPalette, InteractionQuery};
 
 use super::season::Season;
-use super::spawn::level::{GroundLayer, TreeLayer};
-use super::spawn::tree::{HoveredTile, SpawnTree, Tree};
+use super::spawn::level::{GroundLayer, SelectedTile, TreeLayer};
+use super::spawn::tree::{SpawnTree, Tree};
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_game_ui);
@@ -125,12 +125,12 @@ fn selected_tile_tree_ui(parent: &mut ChildBuilder) {
 fn update_selected_tree(
     mut selected_tree_texts: Query<&mut Text, With<SelectedTileTreeUi>>,
     season: Res<Season>,
-    cursor: Res<HoveredTile>,
+    selected_tile: Res<SelectedTile>,
     tree_tile_storage: Query<&TileStorage, With<TreeLayer>>,
     trees: Query<&Tree>,
 ) {
     // Do we have anything selected?
-    let text_value = if let Some(tile_pos) = cursor.tile_pos {
+    let text_value = if let Some(tile_pos) = selected_tile.0 {
         if let Some(entity) = tree_tile_storage.single().get(&tile_pos) {
             if let Ok(tree) = trees.get(entity) {
                 format!("{} ({})", tree.name(), season.kind.header())
@@ -188,11 +188,11 @@ fn selected_tile_ground_ui(parent: &mut ChildBuilder) {
 fn update_selected_ground(
     mut selected_ground_texts: Query<&mut Text, With<SelectedTileGroundUi>>,
     season: Res<Season>,
-    cursor: Res<HoveredTile>,
+    selected_tile: Res<SelectedTile>,
     ground_tile_storage: Query<&TileStorage, With<GroundLayer>>, /*, ground: Query<&Ground> */
 ) {
     // Do we have anything selected?
-    let text_value = if let Some(tile_pos) = cursor.tile_pos {
+    let text_value = if let Some(tile_pos) = selected_tile.0 {
         if let Some(_entity) = ground_tile_storage.single().get(&tile_pos) {
             /* if let Ok(ground) = grounds.get(entity) */
             {
@@ -458,18 +458,20 @@ fn update_season_action(
 
 fn handle_season_action(
     mut button_query: InteractionQuery<&SeasonActionUi>,
-    hovered_tile: Res<HoveredTile>,
-    mut season: ResMut<Season>,
+    mut selected_tile: ResMut<SelectedTile>,
+    season: Res<Season>,
     mut spawn_tree_events: EventWriter<SpawnTree>,
 ) {
     for (interaction, _action) in &mut button_query {
         if matches!(interaction, Interaction::Pressed) && season.user_action_resource > 0 {
-            if let Some(tile_pos) = hovered_tile.tile_pos {
+            if let Some(tile_pos) = selected_tile.0 {
                 spawn_tree_events.send(SpawnTree {
                     tile_pos,
                     tree: Tree::Immature,
+                    use_resource: true,
                 });
-                season.user_action_resource -= 1; /* TODO: I don't check whether it is occupied here, so may lose resource without placing a tree */
+
+                selected_tile.0 = None;
             }
         }
     }
