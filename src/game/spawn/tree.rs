@@ -3,6 +3,7 @@ use bevy_ecs_tilemap::helpers::square_grid::neighbors::Neighbors;
 use bevy_ecs_tilemap::prelude::*;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 use itertools::Itertools;
+use rand::Rng;
 
 use crate::game::season::Season;
 use crate::screen::Screen;
@@ -21,6 +22,10 @@ pub(super) fn plugin(app: &mut App) {
             despawn_tree,
         )
             .run_if(in_state(Screen::Playing)),
+    );
+    app.add_systems(
+        Update,
+        (update_tree_index, grow_action).run_if(in_state(Screen::Playing)),
     );
 }
 
@@ -62,6 +67,15 @@ impl Tree {
             Tree::Immature => "Immature",
             Tree::Mature => "Mature",
             Tree::Overmature => "Overmature",
+        }
+    }
+
+    pub fn next(&self) -> Option<Self> {
+        match self {
+            Tree::Seedling => Some(Tree::Immature),
+            Tree::Immature => Some(Tree::Mature),
+            Tree::Mature => Some(Tree::Overmature),
+            Tree::Overmature => None,
         }
     }
 }
@@ -173,5 +187,82 @@ fn tree_game_of_life(
                 }
             }
         }
+    }
+}
+
+fn update_tree_index(
+    mut tree_q: Query<(&mut TileTextureIndex, &Tree), Changed<Tree>>,
+    season: Res<Season>,
+) {
+    for (mut texture_index, tree) in &mut tree_q {
+        /* Actually do something interesting, like change texture index */
+        let offset = tree.texture_index_offset();
+        texture_index.0 = season.kind.texture_index() + offset;
+    }
+}
+
+/// Tree Actions
+
+#[derive(Debug, Default, Component, Reflect)]
+pub struct GrowAction(Timer);
+
+impl GrowAction {
+    pub fn new() -> Self {
+        Self(Timer::from_seconds(
+            rand::thread_rng().gen_range(2.5..7.5),
+            TimerMode::Once,
+        ))
+    }
+}
+
+fn grow_action(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut grow_tree_q: Query<(Entity, &mut Tree, &mut GrowAction)>,
+) {
+    for (entity, mut tree, mut grow_action) in &mut grow_tree_q {
+        if grow_action.0.tick(time.delta()).just_finished() {
+            if let Some(next) = tree.next() {
+                *tree = next;
+            }
+
+            commands.entity(entity).remove::<GrowAction>();
+        }
+    }
+}
+
+#[derive(Debug, Default, Component, Reflect)]
+pub struct MultiplyAction(Timer);
+
+impl MultiplyAction {
+    pub fn new() -> Self {
+        Self(Timer::from_seconds(
+            rand::thread_rng().gen_range(2.5..7.5),
+            TimerMode::Once,
+        ))
+    }
+}
+
+#[derive(Debug, Default, Component, Reflect)]
+pub struct DieAction(Timer);
+
+impl DieAction {
+    pub fn new() -> Self {
+        Self(Timer::from_seconds(
+            rand::thread_rng().gen_range(2.5..7.5),
+            TimerMode::Once,
+        ))
+    }
+}
+
+#[derive(Debug, Default, Component, Reflect)]
+pub struct FellAction(Timer);
+
+impl FellAction {
+    pub fn new() -> Self {
+        Self(Timer::from_seconds(
+            rand::thread_rng().gen_range(2.5..7.5),
+            TimerMode::Once,
+        ))
     }
 }

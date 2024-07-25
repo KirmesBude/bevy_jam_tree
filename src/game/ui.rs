@@ -7,7 +7,7 @@ use crate::screen::Screen;
 use crate::ui::palette::{BUTTON_HOVERED_BACKGROUND, BUTTON_PRESSED_BACKGROUND, NODE_BACKGROUND};
 use crate::ui::prelude::{InteractionPalette, InteractionQuery};
 
-use super::season::Season;
+use super::season::{Season, StartSeason};
 use super::spawn::level::{GroundLayer, SelectedTile, TreeLayer};
 use super::spawn::tree::{SpawnTree, Tree};
 
@@ -461,6 +461,7 @@ fn update_season_action(
 }
 
 fn handle_season_action(
+    mut commands: Commands,
     mut button_query: InteractionQuery<&SeasonActionUi>,
     mut selected_tile: ResMut<SelectedTile>,
     mut season: ResMut<Season>,
@@ -479,6 +480,7 @@ fn handle_season_action(
                     selected_tile.0 = None;
                 }
             } else {
+                commands.trigger(StartSeason);
                 season.active = true;
             }
         }

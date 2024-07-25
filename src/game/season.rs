@@ -3,7 +3,7 @@ use bevy_ecs_tilemap::tiles::{TilePos, TileStorage, TileTextureIndex};
 
 use crate::screen::Screen;
 
-use super::spawn::tree::Tree;
+use super::spawn::tree::{GrowAction, Tree};
 use super::RunGameLogic;
 
 pub(super) fn plugin(app: &mut App) {
@@ -16,6 +16,7 @@ pub(super) fn plugin(app: &mut App) {
             .run_if(in_state(Screen::Playing)),
     );
     app.observe(transition_to_season);
+    app.observe(start_season);
 }
 
 #[derive(Clone, Copy, Debug, Reflect)]
@@ -176,4 +177,22 @@ fn tick_transition_timer(
 struct SeasonTransition {
     timer: Timer,
     season_kind: SeasonKind,
+}
+
+#[derive(Debug, Event)]
+pub struct StartSeason;
+
+fn start_season(
+    _trigger: Trigger<StartSeason>,
+    mut commands: Commands,
+    tree_q: Query<(Entity, &Tree)>,
+) {
+    for (entity, tree) in &tree_q {
+        match tree {
+            Tree::Seedling | Tree::Immature | Tree::Mature => {
+                commands.entity(entity).insert(GrowAction::new());
+            }
+            Tree::Overmature => { /* Nothing */ }
+        }
+    }
 }
