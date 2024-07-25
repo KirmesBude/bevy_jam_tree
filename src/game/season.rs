@@ -12,12 +12,7 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(
         Update,
-        (
-            activate_season,
-            tick_season_timer,
-            tick_transition_timer,
-            advance_season,
-        )
+        (tick_season_timer, tick_transition_timer, advance_season)
             .run_if(in_state(Screen::Playing)),
     );
     app.observe(transition_to_season);
@@ -98,12 +93,6 @@ fn tick_season_timer(mut commands: Commands, time: Res<Time>, mut season: ResMut
         commands.trigger(TransitionToSeason {
             next_season: season.kind.next(),
         });
-    }
-}
-
-fn activate_season(mut season: ResMut<Season>) {
-    if season.user_action_resource == 0 {
-        season.active = true;
     }
 }
 

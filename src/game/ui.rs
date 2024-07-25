@@ -452,26 +452,34 @@ fn update_season_action(
     mut season_action_texts: Query<&mut Text, With<SeasonActionUi>>,
 ) {
     for mut text in &mut season_action_texts {
-        text.sections[1].value = format!("\n{} Left", season.user_action_resource);
+        if season.user_action_resource > 0 {
+            text.sections[1].value = format!("\n{} Left", season.user_action_resource);
+        } else {
+            text.sections[1].value = format!("\nStart");
+        }
     }
 }
 
 fn handle_season_action(
     mut button_query: InteractionQuery<&SeasonActionUi>,
     mut selected_tile: ResMut<SelectedTile>,
-    season: Res<Season>,
+    mut season: ResMut<Season>,
     mut spawn_tree_events: EventWriter<SpawnTree>,
 ) {
     for (interaction, _action) in &mut button_query {
-        if matches!(interaction, Interaction::Pressed) && season.user_action_resource > 0 {
-            if let Some(tile_pos) = selected_tile.0 {
-                spawn_tree_events.send(SpawnTree {
-                    tile_pos,
-                    tree: Tree::Immature,
-                    use_resource: true,
-                });
+        if matches!(interaction, Interaction::Pressed) {
+            if season.user_action_resource > 0 {
+                if let Some(tile_pos) = selected_tile.0 {
+                    spawn_tree_events.send(SpawnTree {
+                        tile_pos,
+                        tree: Tree::Immature,
+                        use_resource: true,
+                    });
 
-                selected_tile.0 = None;
+                    selected_tile.0 = None;
+                }
+            } else {
+                season.active = true;
             }
         }
     }
