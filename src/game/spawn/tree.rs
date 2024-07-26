@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::helpers::square_grid::neighbors::Neighbors;
 use bevy_ecs_tilemap::prelude::*;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
+use bevy_prng::WyRand;
+use bevy_rand::prelude::GlobalEntropy;
 use itertools::Itertools;
 
 use crate::game::season::logic::TreeAction;
@@ -159,6 +161,7 @@ pub fn grow_logic(
     commands: &mut Commands,
     tree_tile_storage: &TileStorage,
     tree_q: Query<(Entity, &Tree, &TilePos)>,
+    rng: &mut GlobalEntropy<WyRand>,
 ) {
     for (tree_entity, tree, tile_pos) in &tree_q {
         if !matches!(tree, Tree::Overmature) {
@@ -181,7 +184,9 @@ pub fn grow_logic(
             match neighbor_level {
                 0..=2 => {
                     /* Grow */
-                    commands.entity(tree_entity).insert(TreeAction::growing());
+                    commands
+                        .entity(tree_entity)
+                        .insert(TreeAction::growing(rng));
                 }
                 _ => { /* Do nothing */ }
             }
@@ -193,6 +198,7 @@ pub fn overcrowd_dying_logic(
     commands: &mut Commands,
     tree_tile_storage: &TileStorage,
     tree_q: Query<(Entity, &Tree, &TilePos)>,
+    rng: &mut GlobalEntropy<WyRand>,
 ) {
     for (tree_entity, _tree, tile_pos) in &tree_q {
         let neighbor_level =
@@ -211,7 +217,7 @@ pub fn overcrowd_dying_logic(
         match neighbor_level {
             5.. => {
                 /* Dies */
-                commands.entity(tree_entity).insert(TreeAction::dying());
+                commands.entity(tree_entity).insert(TreeAction::dying(rng));
             }
             _ => { /* Do nothing */ }
         }

@@ -1,6 +1,8 @@
 //! Game mechanics and content.
 
 use bevy::prelude::*;
+use bevy_prng::WyRand;
+use bevy_rand::plugin::EntropyPlugin;
 
 pub mod assets;
 pub mod audio;
@@ -9,6 +11,7 @@ pub mod spawn;
 pub mod ui;
 
 pub(super) fn plugin(app: &mut App) {
+    app.add_plugins(EntropyPlugin::<WyRand>::default());
     app.add_plugins((
         audio::plugin,
         assets::plugin,

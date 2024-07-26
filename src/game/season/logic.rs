@@ -1,5 +1,8 @@
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
+use bevy_prng::WyRand;
+use bevy_rand::prelude::GlobalEntropy;
+use rand_core::RngCore;
 
 use crate::{
     game::{
@@ -42,8 +45,14 @@ fn setup_growing(
     mut commands: Commands,
     tree_tile_storage_q: Query<&TileStorage, With<TreeLayer>>,
     tree_q: Query<(Entity, &Tree, &TilePos)>,
+    mut rng: ResMut<GlobalEntropy<WyRand>>,
 ) {
-    grow_logic(&mut commands, tree_tile_storage_q.single(), tree_q);
+    grow_logic(
+        &mut commands,
+        tree_tile_storage_q.single(),
+        tree_q,
+        &mut rng,
+    );
 }
 
 // Spring, Autumn
@@ -55,8 +64,14 @@ fn setup_overcrowd_dying(
     mut commands: Commands,
     tree_tile_storage_q: Query<&TileStorage, With<TreeLayer>>,
     tree_q: Query<(Entity, &Tree, &TilePos)>,
+    mut rng: ResMut<GlobalEntropy<WyRand>>,
 ) {
-    overcrowd_dying_logic(&mut commands, tree_tile_storage_q.single(), tree_q);
+    overcrowd_dying_logic(
+        &mut commands,
+        tree_tile_storage_q.single(),
+        tree_q,
+        &mut rng,
+    );
 }
 
 // Winter
@@ -67,10 +82,11 @@ fn setup_seedling_dying(
     _trigger: Trigger<SetupSeedlingDying>,
     mut commands: Commands,
     tree_q: Query<(Entity, &Tree)>,
+    mut rng: ResMut<GlobalEntropy<WyRand>>,
 ) {
     for (entity, tree) in &tree_q {
         if matches!(tree, Tree::Seedling) {
-            commands.entity(entity).insert(TreeAction::dying());
+            commands.entity(entity).insert(TreeAction::dying(&mut rng));
         }
     }
 }
@@ -82,10 +98,13 @@ fn setup_felling(
     _trigger: Trigger<SetupFelling>,
     mut commands: Commands,
     tree_q: Query<(Entity, &Tree), Without<BadWeather>>,
+    mut rng: ResMut<GlobalEntropy<WyRand>>,
 ) {
     for (entity, tree) in &tree_q {
         if matches!(tree, Tree::Mature | Tree::Overmature) {
-            commands.entity(entity).insert(TreeAction::felling());
+            commands
+                .entity(entity)
+                .insert(TreeAction::felling(&mut rng));
         }
     }
 }
@@ -116,31 +135,35 @@ pub struct TreeAction {
 }
 
 impl TreeAction {
-    pub fn growing() -> Self {
+    pub fn growing(rng: &mut GlobalEntropy<WyRand>) -> Self {
+        let duration = (rng.next_u32() % 30) as f32 * 0.1 + 1.0;
         Self {
             kind: TreeActionKind::Growing,
-            timer: Timer::from_seconds(3.0, TimerMode::Once), /* TODO: Random */
+            timer: Timer::from_seconds(duration, TimerMode::Once),
         }
     }
 
-    pub fn dying() -> Self {
+    pub fn dying(rng: &mut GlobalEntropy<WyRand>) -> Self {
+        let duration = (rng.next_u32() % 30) as f32 * 0.1 + 1.0;
         Self {
             kind: TreeActionKind::Dying,
-            timer: Timer::from_seconds(3.0, TimerMode::Once), /* TODO: Random */
+            timer: Timer::from_seconds(duration, TimerMode::Once),
         }
     }
 
-    pub fn _burning() -> Self {
+    pub fn _burning(rng: &mut GlobalEntropy<WyRand>) -> Self {
+        let duration = (rng.next_u32() % 30) as f32 * 0.1 + 1.0;
         Self {
             kind: TreeActionKind::Burning,
-            timer: Timer::from_seconds(3.0, TimerMode::Once), /* TODO: Random */
+            timer: Timer::from_seconds(duration, TimerMode::Repeating),
         }
     }
 
-    pub fn felling() -> Self {
+    pub fn felling(rng: &mut GlobalEntropy<WyRand>) -> Self {
+        let duration = (rng.next_u32() % 30) as f32 * 0.1 + 1.0;
         Self {
             kind: TreeActionKind::Felling,
-            timer: Timer::from_seconds(3.0, TimerMode::Once), /* TODO: Random */
+            timer: Timer::from_seconds(duration, TimerMode::Once),
         }
     }
 }
