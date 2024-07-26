@@ -13,9 +13,19 @@ Summer: Can place x amount of fire tiles (Fire spreads to adjacent tree tiles, c
 Autumn: Can place x amount of gust tiles that will create seedlings in that direction; normal growth
 Winter: Can place x amount of storm tiles so they are not cut yet; no growth, seedlings die; All overmature/mature trees are felled, but minimum of 4 of any kind? (good idea?)
 
-Tree logic:
-0-2   neighbour level -> normal growth
-3-4   neighbour level -> stop growing
-5-8   neighbour level -> die
-
 Tree Level: (1, 1, 1, 2)
+
+Place stuff -> Season start -> Season ends
+
+Place stuff:
+- Trigger: No more components that are transitioning
+- Action: Allow placing things
+
+Season start:
+- Trigger: Start button pressed
+- Action: Add TreeLogicActions (Growing, NotGrowing, Dying)[Spring/Summer/Autumn] (Felling)[Winter] to all trees
+- Action: Simulate ongoing effects
+
+Season end:
+- Trigger: No more components with remaining action
+- Action: Place SeasonTransition on all tiles entities
