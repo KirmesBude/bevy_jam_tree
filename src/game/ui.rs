@@ -10,7 +10,7 @@ use crate::ui::prelude::{InteractionPalette, InteractionQuery};
 use super::season::state::{NextSeasonState, SeasonState};
 use super::season::Season;
 use super::spawn::level::{GroundLayer, SelectedTile, TreeLayer};
-use super::spawn::tree::{SpawnTree, Tree};
+use super::spawn::tree::Tree;
 use super::Score;
 
 pub(super) fn plugin(app: &mut App) {
@@ -462,25 +462,17 @@ fn update_season_action(
     }
 }
 
+// TODO: This should be abstracted away better
 fn handle_season_action(
+    mut commands: Commands,
     mut button_query: InteractionQuery<&SeasonActionUi>,
-    mut selected_tile: ResMut<SelectedTile>,
     season: Res<Season>,
-    mut spawn_tree_events: EventWriter<SpawnTree>,
     mut next_season_state_events: EventWriter<NextSeasonState>,
 ) {
     for (interaction, _action) in &mut button_query {
         if matches!(interaction, Interaction::Pressed) {
             if season.user_action_resource > 0 {
-                if let Some(tile_pos) = selected_tile.0 {
-                    spawn_tree_events.send(SpawnTree {
-                        tile_pos,
-                        tree: Tree::Seedling,
-                        use_resource: true,
-                    });
-
-                    selected_tile.0 = None;
-                }
+                season.kind.user_action(&mut commands);
             } else if matches!(season.state, SeasonState::UserInput) {
                 next_season_state_events.send(NextSeasonState(season.state.next()));
             }

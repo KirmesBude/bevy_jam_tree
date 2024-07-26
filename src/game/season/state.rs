@@ -4,10 +4,7 @@ use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 use crate::screen::Screen;
 
 use super::{
-    logic::{
-        SetupFelling, SetupGrowing, SetupMultiply, SetupOvercrowdDying, SetupSeedlingDying,
-        TreeAction,
-    },
+    logic::{SetupFelling, SetupGrowing, SetupOvercrowdDying, SetupSeedlingDying, TreeAction},
     Season, SeasonKind, SeasonTransition,
 };
 
@@ -121,7 +118,6 @@ fn setup_simulation(trigger: Trigger<SetupSimulation>, mut commands: Commands) {
             commands.trigger(SetupGrowing);
         }
         SeasonKind::Autumn => {
-            commands.trigger(SetupMultiply);
             commands.trigger(SetupGrowing);
             commands.trigger(SetupOvercrowdDying);
         }

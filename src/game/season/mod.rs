@@ -1,10 +1,13 @@
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::TileTextureIndex;
+use bevy_ecs_tilemap::tiles::{TilePos, TileStorage, TileTextureIndex};
 use state::SeasonState;
 
 use crate::screen::Screen;
 
-use super::spawn::tree::Tree;
+use super::spawn::{
+    level::{SelectedTile, TreeLayer},
+    tree::{SpawnTree, Tree},
+};
 
 pub mod logic;
 pub mod state;
@@ -18,6 +21,11 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         (handle_transition).run_if(in_state(Screen::Playing)),
     );
+
+    app.observe(spring_user_action);
+    app.observe(summer_user_action);
+    app.observe(autumn_user_action);
+    app.observe(winter_user_action);
 }
 
 #[derive(Clone, Copy, Debug, Reflect)]
@@ -62,6 +70,15 @@ impl SeasonKind {
             SeasonKind::Summer => "User action: Place/combat(?) wildfires; Passive effects: Accelerated growth, random new trees",
             SeasonKind::Autumn => "User action: Wind direction?; Passive effect: Trees multiply",
             SeasonKind::Winter => "User action: AoE Heavy Snowfall(No trees are felled there); Passive effect: Trees are felled (mature/overmature)",
+        }
+    }
+
+    pub fn user_action(&self, commands: &mut Commands) {
+        match self {
+            SeasonKind::Spring => commands.trigger(SpringUserAction),
+            SeasonKind::Summer => commands.trigger(SummerUserAction),
+            SeasonKind::Autumn => commands.trigger(AutumnUserAction),
+            SeasonKind::Winter => commands.trigger(WinterUserAction),
         }
     }
 }
@@ -113,4 +130,98 @@ fn handle_transition(
 struct SeasonTransition {
     timer: Timer,
     season_kind: SeasonKind,
+}
+
+#[derive(Debug, Event)]
+pub struct SpringUserAction;
+
+fn spring_user_action(
+    _trigger: Trigger<SpringUserAction>,
+    mut selected_tile: ResMut<SelectedTile>,
+    mut spawn_tree_events: EventWriter<SpawnTree>,
+) {
+    if let Some(tile_pos) = selected_tile.0 {
+        spawn_tree_events.send(SpawnTree {
+            tile_pos,
+            tree: Tree::Seedling,
+            use_resource: true,
+        });
+
+        selected_tile.0 = None;
+    }
+}
+
+#[derive(Debug, Event)]
+pub struct SummerUserAction;
+
+fn summer_user_action(_trigger: Trigger<SummerUserAction>, mut season: ResMut<Season>) {
+    season.user_action_resource -= 1;
+}
+
+#[derive(Debug, Event)]
+pub struct AutumnUserAction;
+
+fn autumn_user_action(
+    _trigger: Trigger<AutumnUserAction>,
+    mut selected_tile: ResMut<SelectedTile>,
+    mut spawn_tree_events: EventWriter<SpawnTree>,
+    tree_tile_storage_q: Query<&TileStorage, With<TreeLayer>>,
+) {
+    if let Some(tile_pos) = selected_tile.0 {
+        let tile_storage = tree_tile_storage_q.single();
+        if tile_storage.checked_get(&tile_pos).is_some() {
+            if tile_pos.x > 0 {
+                spawn_tree_events.send(SpawnTree {
+                    tile_pos: TilePos {
+                        x: tile_pos.x - 1,
+                        y: tile_pos.y,
+                    },
+                    tree: Tree::Seedling,
+                    use_resource: true,
+                });
+            }
+
+            if tile_pos.x < tile_storage.size.x - 1 {
+                spawn_tree_events.send(SpawnTree {
+                    tile_pos: TilePos {
+                        x: tile_pos.x + 1,
+                        y: tile_pos.y,
+                    },
+                    tree: Tree::Seedling,
+                    use_resource: true,
+                });
+            }
+
+            if tile_pos.y > 0 {
+                spawn_tree_events.send(SpawnTree {
+                    tile_pos: TilePos {
+                        x: tile_pos.x,
+                        y: tile_pos.y - 1,
+                    },
+                    tree: Tree::Seedling,
+                    use_resource: true,
+                });
+            }
+
+            if tile_pos.y < tile_storage.size.y - 1 {
+                spawn_tree_events.send(SpawnTree {
+                    tile_pos: TilePos {
+                        x: tile_pos.x,
+                        y: tile_pos.y + 1,
+                    },
+                    tree: Tree::Seedling,
+                    use_resource: true,
+                });
+            }
+
+            selected_tile.0 = None;
+        }
+    }
+}
+
+#[derive(Debug, Event)]
+pub struct WinterUserAction;
+
+fn winter_user_action(_trigger: Trigger<WinterUserAction>, mut season: ResMut<Season>) {
+    season.user_action_resource -= 1;
 }

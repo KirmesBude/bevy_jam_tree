@@ -105,6 +105,9 @@ fn spawn_tree(
     let (overlay_entity, mut overlay_storage) = overlay_map.single_mut();
     for event in spawn_tree_events.read().unique() {
         let tile_pos = event.tile_pos;
+        if tile_pos.x >= overlay_storage.size.x || tile_pos.y >= overlay_storage.size.y {
+            return;
+        }
         if overlay_storage.checked_get(&tile_pos).is_none() {
             let tilemap_id = TilemapId(overlay_entity);
             commands.entity(overlay_entity).with_children(|parent| {

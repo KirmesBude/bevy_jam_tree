@@ -17,14 +17,12 @@ pub(super) fn plugin(app: &mut App) {
 
     app.observe(setup_growing);
     app.observe(setup_overcrowd_dying);
-    app.observe(setup_multiply);
     app.observe(setup_seedling_dying);
     app.observe(setup_felling);
 
     app.observe(grow);
     app.observe(die);
     app.observe(burn);
-    app.observe(multiply);
     app.observe(fell);
 
     app.add_systems(
@@ -57,15 +55,6 @@ fn setup_overcrowd_dying(
     tree_q: Query<(Entity, &Tree, &TilePos)>,
 ) {
     overcrowd_dying_logic(&mut commands, tree_tile_storage_q.single(), tree_q);
-}
-
-// Autumn
-#[derive(Debug, Event)]
-pub struct SetupMultiply;
-
-fn setup_multiply(_trigger: Trigger<SetupMultiply>) {
-    // Spawn trees where relevant with growing component
-    // TODO: Actually lets just spawn as user action, no effect/component/anything needed either
 }
 
 // Winter
@@ -104,7 +93,6 @@ enum TreeActionKind {
     Growing,
     Dying,
     Burning,
-    Multiplying,
     Felling,
 }
 
@@ -114,7 +102,6 @@ impl TreeActionKind {
             TreeActionKind::Growing => commands.trigger(Grow(entity)),
             TreeActionKind::Dying => commands.trigger(Die(entity)),
             TreeActionKind::Burning => commands.trigger(Burn(entity)),
-            TreeActionKind::Multiplying => commands.trigger(Multiply(entity)),
             TreeActionKind::Felling => commands.trigger(Fell(entity)),
         }
     }
@@ -144,13 +131,6 @@ impl TreeAction {
     pub fn _burning() -> Self {
         Self {
             kind: TreeActionKind::Burning,
-            timer: Timer::from_seconds(3.0, TimerMode::Once), /* TODO: Random */
-        }
-    }
-
-    pub fn _mutliplying() -> Self {
-        Self {
-            kind: TreeActionKind::Multiplying,
             timer: Timer::from_seconds(3.0, TimerMode::Once), /* TODO: Random */
         }
     }
@@ -217,13 +197,6 @@ fn die(
 pub struct Burn(Entity);
 
 fn burn(trigger: Trigger<Burn>) {
-    let _entity = trigger.event().0;
-}
-
-#[derive(Debug, Event)]
-pub struct Multiply(Entity);
-
-fn multiply(trigger: Trigger<Multiply>) {
     let _entity = trigger.event().0;
 }
 
