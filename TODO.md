@@ -29,3 +29,5 @@ Season start:
 Season end:
 - Trigger: No more components with remaining action
 - Action: Place SeasonTransition on all tiles entities
+
+Add credit to soundtrack
