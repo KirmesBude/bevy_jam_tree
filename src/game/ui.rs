@@ -454,10 +454,16 @@ fn update_season_action(
     mut season_action_texts: Query<&mut Text, With<SeasonActionUi>>,
 ) {
     for mut text in &mut season_action_texts {
-        if season.user_action_resource > 0 {
-            text.sections[1].value = format!("\n{} Left", season.user_action_resource);
+        if matches!(season.state, SeasonState::UserInput) {
+            text.sections[0].value = String::from("Action");
+            if season.user_action_resource > 0 {
+                text.sections[1].value = format!("\n{} Left", season.user_action_resource);
+            } else {
+                text.sections[1].value = String::from("\nStart");
+            }
         } else {
-            text.sections[1].value = String::from("\nStart");
+            text.sections[0].value = String::from("Simulating");
+            text.sections[1].value = String::from("");
         }
     }
 }

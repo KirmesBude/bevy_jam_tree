@@ -160,7 +160,7 @@ pub struct DespawnTree {
 pub fn grow_logic(
     commands: &mut Commands,
     tree_tile_storage: &TileStorage,
-    tree_q: Query<(Entity, &Tree, &TilePos)>,
+    tree_q: Query<(Entity, &Tree, &TilePos), Without<TreeAction>>,
     rng: &mut GlobalEntropy<WyRand>,
 ) {
     for (tree_entity, tree, tile_pos) in &tree_q {
@@ -197,7 +197,7 @@ pub fn grow_logic(
 pub fn overcrowd_dying_logic(
     commands: &mut Commands,
     tree_tile_storage: &TileStorage,
-    tree_q: Query<(Entity, &Tree, &TilePos)>,
+    tree_q: Query<(Entity, &Tree, &TilePos), Without<TreeAction>>,
     rng: &mut GlobalEntropy<WyRand>,
 ) {
     for (tree_entity, _tree, tile_pos) in &tree_q {

@@ -1,5 +1,11 @@
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::{TilePos, TileStorage, TileTextureIndex};
+use bevy_ecs_tilemap::{
+    helpers::square_grid::neighbors::Neighbors,
+    tiles::{TileStorage, TileTextureIndex},
+};
+use bevy_prng::WyRand;
+use bevy_rand::prelude::GlobalEntropy;
+use logic::TreeAction;
 use state::SeasonState;
 
 use crate::screen::Screen;
@@ -155,8 +161,25 @@ fn spring_user_action(
 #[derive(Debug, Event)]
 pub struct SummerUserAction;
 
-fn summer_user_action(_trigger: Trigger<SummerUserAction>, mut season: ResMut<Season>) {
-    season.user_action_resource -= 1;
+fn summer_user_action(
+    _trigger: Trigger<SummerUserAction>,
+    mut selected_tile: ResMut<SelectedTile>,
+    mut season: ResMut<Season>,
+    mut commands: Commands,
+    tree_tile_storage_q: Query<&TileStorage, With<TreeLayer>>,
+    mut rng: ResMut<GlobalEntropy<WyRand>>,
+) {
+    if let Some(tile_pos) = selected_tile.0 {
+        let tile_storage = tree_tile_storage_q.single();
+        if let Some(entity) = tile_storage.checked_get(&tile_pos) {
+            commands
+                .entity(entity)
+                .insert(TreeAction::burning(&mut rng));
+
+            season.user_action_resource = 0;
+            selected_tile.0 = None;
+        }
+    }
 }
 
 #[derive(Debug, Event)]
@@ -166,56 +189,77 @@ fn autumn_user_action(
     _trigger: Trigger<AutumnUserAction>,
     mut selected_tile: ResMut<SelectedTile>,
     mut spawn_tree_events: EventWriter<SpawnTree>,
+    tree_q: Query<&Tree>,
     tree_tile_storage_q: Query<&TileStorage, With<TreeLayer>>,
 ) {
     if let Some(tile_pos) = selected_tile.0 {
         let tile_storage = tree_tile_storage_q.single();
-        if tile_storage.checked_get(&tile_pos).is_some() {
-            if tile_pos.x > 0 {
-                spawn_tree_events.send(SpawnTree {
-                    tile_pos: TilePos {
-                        x: tile_pos.x - 1,
-                        y: tile_pos.y,
-                    },
-                    tree: Tree::Seedling,
-                    use_resource: true,
-                });
-            }
+        if let Some(entity) = tile_storage.checked_get(&tile_pos) {
+            if let Ok(tree) = tree_q.get(entity) {
+                if matches!(tree, Tree::Mature | Tree::Overmature) {
+                    Neighbors::get_square_neighboring_positions(
+                        &tile_pos,
+                        &tile_storage.size,
+                        false,
+                    )
+                    .iter()
+                    .for_each(|tile_pos| {
+                        spawn_tree_events.send(SpawnTree {
+                            tile_pos: *tile_pos,
+                            tree: Tree::Seedling,
+                            use_resource: true,
+                        });
+                    });
 
-            if tile_pos.x < tile_storage.size.x - 1 {
-                spawn_tree_events.send(SpawnTree {
-                    tile_pos: TilePos {
-                        x: tile_pos.x + 1,
-                        y: tile_pos.y,
-                    },
-                    tree: Tree::Seedling,
-                    use_resource: true,
-                });
-            }
+                    selected_tile.0 = None;
 
-            if tile_pos.y > 0 {
-                spawn_tree_events.send(SpawnTree {
-                    tile_pos: TilePos {
-                        x: tile_pos.x,
-                        y: tile_pos.y - 1,
-                    },
-                    tree: Tree::Seedling,
-                    use_resource: true,
-                });
-            }
+                    /*
+                    if tile_pos.x > 0 {
+                                    spawn_tree_events.send(SpawnTree {
+                                        tile_pos: TilePos {
+                                            x: tile_pos.x - 1,
+                                            y: tile_pos.y,
+                                        },
+                                        tree: Tree::Seedling,
+                                        use_resource: true,
+                                    });
+                                }
 
-            if tile_pos.y < tile_storage.size.y - 1 {
-                spawn_tree_events.send(SpawnTree {
-                    tile_pos: TilePos {
-                        x: tile_pos.x,
-                        y: tile_pos.y + 1,
-                    },
-                    tree: Tree::Seedling,
-                    use_resource: true,
-                });
-            }
+                                if tile_pos.x < tile_storage.size.x - 1 {
+                                    spawn_tree_events.send(SpawnTree {
+                                        tile_pos: TilePos {
+                                            x: tile_pos.x + 1,
+                                            y: tile_pos.y,
+                                        },
+                                        tree: Tree::Seedling,
+                                        use_resource: true,
+                                    });
+                                }
 
-            selected_tile.0 = None;
+                                if tile_pos.y > 0 {
+                                    spawn_tree_events.send(SpawnTree {
+                                        tile_pos: TilePos {
+                                            x: tile_pos.x,
+                                            y: tile_pos.y - 1,
+                                        },
+                                        tree: Tree::Seedling,
+                                        use_resource: true,
+                                    });
+                                }
+
+                                if tile_pos.y < tile_storage.size.y - 1 {
+                                    spawn_tree_events.send(SpawnTree {
+                                        tile_pos: TilePos {
+                                            x: tile_pos.x,
+                                            y: tile_pos.y + 1,
+                                        },
+                                        tree: Tree::Seedling,
+                                        use_resource: true,
+                                    });
+                                }
+                    */
+                }
+            }
         }
     }
 }

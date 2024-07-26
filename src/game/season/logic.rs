@@ -1,5 +1,8 @@
-use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
+use bevy::{ecs::entity::EntityHashMap, prelude::*};
+use bevy_ecs_tilemap::{
+    helpers::square_grid::neighbors::Neighbors,
+    tiles::{TilePos, TileStorage},
+};
 use bevy_prng::WyRand;
 use bevy_rand::prelude::GlobalEntropy;
 use rand_core::RngCore;
@@ -15,7 +18,7 @@ use crate::{
     screen::Screen,
 };
 
-use super::BadWeather;
+use super::{state::SeasonState, BadWeather, Season};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<TreeAction>();
@@ -32,7 +35,7 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(
         Update,
-        (handle_tree_action, spread_fire).run_if(in_state(Screen::Playing)),
+        (handle_tree_action).run_if(in_state(Screen::Playing)),
     );
 }
 
@@ -44,7 +47,7 @@ fn setup_growing(
     _trigger: Trigger<SetupGrowing>,
     mut commands: Commands,
     tree_tile_storage_q: Query<&TileStorage, With<TreeLayer>>,
-    tree_q: Query<(Entity, &Tree, &TilePos)>,
+    tree_q: Query<(Entity, &Tree, &TilePos), Without<TreeAction>>,
     mut rng: ResMut<GlobalEntropy<WyRand>>,
 ) {
     grow_logic(
@@ -63,7 +66,7 @@ fn setup_overcrowd_dying(
     _trigger: Trigger<SetupOvercrowdDying>,
     mut commands: Commands,
     tree_tile_storage_q: Query<&TileStorage, With<TreeLayer>>,
-    tree_q: Query<(Entity, &Tree, &TilePos)>,
+    tree_q: Query<(Entity, &Tree, &TilePos), Without<TreeAction>>,
     mut rng: ResMut<GlobalEntropy<WyRand>>,
 ) {
     overcrowd_dying_logic(
@@ -151,7 +154,7 @@ impl TreeAction {
         }
     }
 
-    pub fn _burning(rng: &mut GlobalEntropy<WyRand>) -> Self {
+    pub fn burning(rng: &mut GlobalEntropy<WyRand>) -> Self {
         let duration = (rng.next_u32() % 30) as f32 * 0.1 + 1.0;
         Self {
             kind: TreeActionKind::Burning,
@@ -176,14 +179,17 @@ impl TreeAction {
 
 fn handle_tree_action(
     mut commands: Commands,
+    season: Res<Season>,
     time: Res<Time>,
     mut tree_action_q: Query<(Entity, &mut TreeAction)>,
 ) {
-    for (entity, mut tree_action) in &mut tree_action_q {
-        if tree_action.timer.tick(time.delta()).just_finished() {
-            tree_action.trigger(&mut commands, entity);
+    if matches!(season.state, SeasonState::Simulation) {
+        for (entity, mut tree_action) in &mut tree_action_q {
+            if tree_action.timer.tick(time.delta()).just_finished() {
+                tree_action.trigger(&mut commands, entity);
 
-            commands.entity(entity).remove::<TreeAction>();
+                commands.entity(entity).remove::<TreeAction>();
+            }
         }
     }
 }
@@ -221,8 +227,41 @@ fn die(
 #[derive(Debug, Event)]
 pub struct Burn(Entity);
 
-fn burn(trigger: Trigger<Burn>) {
-    let _entity = trigger.event().0;
+fn burn(
+    trigger: Trigger<Burn>,
+    mut entity_map: Local<EntityHashMap<usize>>,
+    tree_q: Query<(&Tree, &TilePos)>,
+    tree_tile_storage_q: Query<&TileStorage, With<TreeLayer>>,
+    mut commands: Commands,
+    mut despawn_tree_events: EventWriter<DespawnTree>,
+    mut rng: ResMut<GlobalEntropy<WyRand>>,
+) {
+    let entity = trigger.event().0;
+
+    if let Ok((_tree, tile_pos)) = tree_q.get(entity) {
+        let counter = entity_map.entry(entity).or_insert(0);
+        *counter += 1;
+
+        if *counter == 1 {
+            // spread fire
+            // TODO: This does not work, because could be empty tile
+            let tile_storage = tree_tile_storage_q.single();
+            Neighbors::get_square_neighboring_positions(tile_pos, &tile_storage.size, true)
+                .entities(tile_storage)
+                .iter()
+                .for_each(|entity| {
+                    commands
+                        .entity(*entity)
+                        .insert(TreeAction::burning(&mut rng));
+                });
+        } else {
+            despawn_tree_events.send(DespawnTree {
+                tile_pos: *tile_pos,
+            });
+            entity_map.remove(&entity);
+            //TODO: Make ground good soil
+        }
+    }
 }
 
 #[derive(Debug, Event)]
@@ -244,5 +283,3 @@ fn fell(
         score.0 += tree.score();
     }
 }
-
-fn spread_fire() {}

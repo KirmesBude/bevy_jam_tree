@@ -10,3 +10,6 @@ Autumn: Can place x amount of gust tiles that will create seedlings in that dire
 Winter: Can place x amount of storm tiles so they are not cut yet; no growth, seedlings die; All overmature/mature trees are felled, but minimum of 4 of any kind? (good idea?)
 
 Make seedling have level 1 anyways?
+
+Implement effects on effect layer
+Implement good soil
