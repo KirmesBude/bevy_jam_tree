@@ -81,7 +81,7 @@ impl Tree {
 
     pub fn level(&self) -> u32 {
         match self {
-            Tree::Seedling => 1,
+            Tree::Seedling => 0,
             Tree::Immature => 1,
             Tree::Mature => 1,
             Tree::Overmature => 2,
