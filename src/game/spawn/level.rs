@@ -7,6 +7,7 @@ use bevy_ecs_tilemap::TilemapPlugin;
 
 use bevy_ecs_tilemap::prelude::*;
 
+use crate::game::assets::ImageAssets;
 use crate::screen::Screen;
 
 use super::tree::Tree;
@@ -58,10 +59,10 @@ const MAP_SIZE: u32 = 8;
 fn spawn_level(
     _trigger: Trigger<SpawnLevel>,
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    image_assets: Res<ImageAssets>,
 ) {
     // GroundLayer
-    let texture_handle: Handle<Image> = asset_server.load("images/ground_tileset.png");
+    let texture_handle = image_assets.ground_tileset.clone_weak();
 
     let map_size = TilemapSize {
         x: MAP_SIZE,
@@ -105,7 +106,7 @@ fn spawn_level(
     ));
 
     // Tree Layer
-    let texture_handle: Handle<Image> = asset_server.load("images/tree_tileset.png");
+    let texture_handle = image_assets.tree_tileset.clone_weak();
 
     let mut tile_storage = TileStorage::empty(map_size);
     let tilemap_entity = commands.spawn_empty().id();
