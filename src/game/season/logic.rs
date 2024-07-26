@@ -73,7 +73,7 @@ fn setup_multiply(_trigger: Trigger<SetupMultiply>) {
 pub struct SetupSeedlingDying;
 
 fn setup_seedling_dying(
-    _trigger: Trigger<SetupOvercrowdDying>,
+    _trigger: Trigger<SetupSeedlingDying>,
     mut commands: Commands,
     tree_q: Query<(Entity, &Tree)>,
 ) {

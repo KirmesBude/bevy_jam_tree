@@ -11,6 +11,7 @@ use super::season::state::{NextSeasonState, SeasonState};
 use super::season::Season;
 use super::spawn::level::{GroundLayer, SelectedTile, TreeLayer};
 use super::spawn::tree::{SpawnTree, Tree};
+use super::Score;
 
 pub(super) fn plugin(app: &mut App) {
     app.observe(spawn_game_ui);
@@ -333,11 +334,11 @@ fn season_clock_ui(parent: &mut ChildBuilder) {
 }
 
 fn update_season_clock(
-    _season: Res<Season>,
+    score: Res<Score>,
     mut season_clock_texts: Query<&mut Text, With<SeasonClockUi>>,
 ) {
     for mut text in &mut season_clock_texts {
-        text.sections[0].value = String::from("lol");
+        text.sections[0].value = format!("Score: {}", score.0);
     }
 }
 

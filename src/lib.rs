@@ -7,6 +7,7 @@ mod ui;
 use bevy::{
     asset::AssetMetaCheck,
     audio::{AudioPlugin, Volume},
+    log::LogPlugin,
     prelude::*,
 };
 
@@ -49,7 +50,8 @@ impl Plugin for AppPlugin {
                         volume: Volume::new(0.3),
                     },
                     ..default()
-                }),
+                })
+                .disable::<LogPlugin>(),
         );
 
         // Add other plugins.

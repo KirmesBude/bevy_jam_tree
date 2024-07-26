@@ -72,9 +72,15 @@ fn to_transition(
     season: Res<Season>,
     mut next_season_state_events: EventWriter<NextSeasonState>,
     tree_action_q: Query<&TreeAction>,
+    mut looking: Local<bool>,
 ) {
-    if matches!(season.state, SeasonState::Simulation) && tree_action_q.is_empty() {
-        next_season_state_events.send(NextSeasonState(season.state.next()));
+    if matches!(season.state, SeasonState::Simulation) {
+        if *looking && tree_action_q.is_empty() {
+            next_season_state_events.send(NextSeasonState(season.state.next()));
+            *looking = false;
+        } else if !tree_action_q.is_empty() {
+            *looking = true;
+        }
     }
 }
 
@@ -82,9 +88,15 @@ fn to_user_input(
     season: Res<Season>,
     mut next_season_state_events: EventWriter<NextSeasonState>,
     season_transition_q: Query<&SeasonTransition>,
+    mut looking: Local<bool>,
 ) {
-    if matches!(season.state, SeasonState::Transition) && season_transition_q.is_empty() {
-        next_season_state_events.send(NextSeasonState(season.state.next()));
+    if matches!(season.state, SeasonState::Transition) {
+        if *looking && season_transition_q.is_empty() {
+            next_season_state_events.send(NextSeasonState(season.state.next()));
+            *looking = false;
+        } else if !season_transition_q.is_empty() {
+            *looking = true;
+        }
     }
 }
 
