@@ -65,7 +65,7 @@ pub struct SetupMultiply;
 
 fn setup_multiply(_trigger: Trigger<SetupMultiply>) {
     // Spawn trees where relevant with growing component
-    // TODO
+    // TODO: Actually lets just spawn as user action, no effect/component/anything needed either
 }
 
 // Winter
