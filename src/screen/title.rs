@@ -3,10 +3,14 @@
 use bevy::prelude::*;
 
 use super::Screen;
-use crate::ui::prelude::*;
+use crate::{
+    game::{assets::SoundtrackAssets, audio::soundtrack::PlaySoundtrack},
+    ui::prelude::*,
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Title), enter_title);
+    app.add_systems(OnEnter(Screen::Title), exit_title);
 
     app.register_type::<TitleAction>();
     app.add_systems(Update, handle_title_action.run_if(in_state(Screen::Title)));
@@ -22,7 +26,7 @@ enum TitleAction {
     Exit,
 }
 
-fn enter_title(mut commands: Commands) {
+fn enter_title(mut commands: Commands, soundtrack_assets: Res<SoundtrackAssets>) {
     commands
         .ui_root()
         .insert(StateScoped(Screen::Title))
@@ -33,6 +37,8 @@ fn enter_title(mut commands: Commands) {
             #[cfg(not(target_family = "wasm"))]
             children.button("Exit").insert(TitleAction::Exit);
         });
+
+    commands.trigger(PlaySoundtrack::Handle(soundtrack_assets.title.clone_weak()));
 }
 
 fn handle_title_action(
@@ -53,4 +59,8 @@ fn handle_title_action(
             }
         }
     }
+}
+
+fn exit_title(mut commands: Commands) {
+    commands.trigger(PlaySoundtrack::Disable);
 }

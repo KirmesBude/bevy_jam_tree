@@ -28,8 +28,12 @@ pub struct SfxAssets {
 
 #[derive(AssetCollection, Resource)]
 pub struct SoundtrackAssets {
-    #[asset(path = "audio/soundtracks/Monkeys Spinning Monkeys.ogg")]
+    #[asset(path = "audio/soundtracks/Vindsvept - Crystal Forest.ogg")]
+    pub title: Handle<AudioSource>,
+    #[asset(path = "audio/soundtracks/Vindsvept - Fall of the Leaf.ogg")]
     pub credits: Handle<AudioSource>,
-    #[asset(path = "audio/soundtracks/Fluffing A Duck.ogg")]
+    #[asset(path = "audio/soundtracks/Vindsvept - Woodland Lullaby.ogg")]
     pub gameplay: Handle<AudioSource>,
+    #[asset(path = "audio/soundtracks/Vindsvept - Season Unending.ogg")]
+    pub gameplay2: Handle<AudioSource>,
 }
