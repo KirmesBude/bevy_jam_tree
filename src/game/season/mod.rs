@@ -122,6 +122,7 @@ fn handle_transition(
             texture_index.0 = season_transition.season_kind.texture_index() + offset;
 
             commands.entity(entity).remove::<SeasonTransition>();
+            commands.entity(entity).remove::<BadWeather>();
         }
     }
 }
@@ -222,6 +223,23 @@ fn autumn_user_action(
 #[derive(Debug, Event)]
 pub struct WinterUserAction;
 
-fn winter_user_action(_trigger: Trigger<WinterUserAction>, mut season: ResMut<Season>) {
-    season.user_action_resource -= 1;
+fn winter_user_action(
+    _trigger: Trigger<WinterUserAction>,
+    mut season: ResMut<Season>,
+    mut selected_tile: ResMut<SelectedTile>,
+    tree_tile_storage_q: Query<&TileStorage, With<TreeLayer>>,
+    mut commands: Commands,
+) {
+    if let Some(tile_pos) = selected_tile.0 {
+        let tile_storage = tree_tile_storage_q.single();
+
+        if let Some(entity) = tile_storage.get(&tile_pos) {
+            commands.entity(entity).insert(BadWeather);
+            season.user_action_resource -= 1;
+            selected_tile.0 = None;
+        }
+    }
 }
+
+#[derive(Debug, Default, Component, Reflect)]
+pub struct BadWeather;

@@ -12,6 +12,8 @@ use crate::{
     screen::Screen,
 };
 
+use super::BadWeather;
+
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<TreeAction>();
 
@@ -79,7 +81,7 @@ pub struct SetupFelling;
 fn setup_felling(
     _trigger: Trigger<SetupFelling>,
     mut commands: Commands,
-    tree_q: Query<(Entity, &Tree)>,
+    tree_q: Query<(Entity, &Tree), Without<BadWeather>>,
 ) {
     for (entity, tree) in &tree_q {
         if matches!(tree, Tree::Mature | Tree::Overmature) {
