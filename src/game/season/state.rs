@@ -3,7 +3,13 @@ use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 
 use crate::screen::Screen;
 
-use super::{logic::{SetupFelling, SetupGrowing, SetupMultiply, SetupOvercrowdDying, SetupSeedlingDying, TreeAction}, Season, SeasonKind, SeasonTransition};
+use super::{
+    logic::{
+        SetupFelling, SetupGrowing, SetupMultiply, SetupOvercrowdDying, SetupSeedlingDying,
+        TreeAction,
+    },
+    Season, SeasonKind, SeasonTransition,
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.register_type::<SeasonState>();
@@ -15,8 +21,7 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(
         Update,
-        (to_transition, to_user_input, handle_next_season_state)
-            .run_if(in_state(Screen::Playing)),
+        (to_transition, to_user_input, handle_next_season_state).run_if(in_state(Screen::Playing)),
     );
 }
 
@@ -28,7 +33,7 @@ pub enum SeasonState {
 }
 
 impl SeasonState {
-    fn next(&self) -> Self {
+    pub fn next(&self) -> Self {
         match self {
             SeasonState::UserInput => SeasonState::Simulation,
             SeasonState::Simulation => SeasonState::Transition,
@@ -48,7 +53,11 @@ impl SeasonState {
 #[derive(Debug, Event, Reflect)]
 pub struct NextSeasonState(pub SeasonState);
 
-fn handle_next_season_state(mut commands: Commands, mut next_season_state_events: EventReader<NextSeasonState>, mut season: ResMut<Season>) {
+fn handle_next_season_state(
+    mut commands: Commands,
+    mut next_season_state_events: EventReader<NextSeasonState>,
+    mut season: ResMut<Season>,
+) {
     for event in next_season_state_events.read() {
         season.state = event.0;
 
@@ -59,22 +68,30 @@ fn handle_next_season_state(mut commands: Commands, mut next_season_state_events
 
 // to_simulation is handled by ui
 
-fn to_transition(season: Res<Season>, mut next_season_state_events: EventWriter<NextSeasonState>, tree_action_q: Query<&TreeAction>) {
+fn to_transition(
+    season: Res<Season>,
+    mut next_season_state_events: EventWriter<NextSeasonState>,
+    tree_action_q: Query<&TreeAction>,
+) {
     if matches!(season.state, SeasonState::Simulation) && tree_action_q.is_empty() {
-        next_season_state_events.send(NextSeasonState(SeasonState::Transition));
+        next_season_state_events.send(NextSeasonState(season.state.next()));
     }
 }
 
-fn to_user_input(season: Res<Season>, mut next_season_state_events: EventWriter<NextSeasonState>, season_transition_q: Query<&SeasonTransition>) {
+fn to_user_input(
+    season: Res<Season>,
+    mut next_season_state_events: EventWriter<NextSeasonState>,
+    season_transition_q: Query<&SeasonTransition>,
+) {
     if matches!(season.state, SeasonState::Transition) && season_transition_q.is_empty() {
-        next_season_state_events.send(NextSeasonState(SeasonState::UserInput));
+        next_season_state_events.send(NextSeasonState(season.state.next()));
     }
 }
 
 #[derive(Debug, Event)]
 struct SetupUserInput(SeasonKind);
 
-fn setup_user_input(trigger: Trigger<SetupUserInput>, mut season: ResMut<Season>,) {
+fn setup_user_input(trigger: Trigger<SetupUserInput>, mut season: ResMut<Season>) {
     season.kind = trigger.event().0.next();
     season.user_action_resource = 4; // TODO: Needs to be different per season, probably
 }
@@ -87,26 +104,27 @@ fn setup_simulation(trigger: Trigger<SetupSimulation>, mut commands: Commands) {
         SeasonKind::Spring => {
             commands.trigger(SetupGrowing);
             commands.trigger(SetupOvercrowdDying);
-        },
+        }
         SeasonKind::Summer => {
             commands.trigger(SetupGrowing);
-        },
+        }
         SeasonKind::Autumn => {
             commands.trigger(SetupMultiply);
             commands.trigger(SetupGrowing);
             commands.trigger(SetupOvercrowdDying);
-        },
+        }
         SeasonKind::Winter => {
             commands.trigger(SetupSeedlingDying);
             commands.trigger(SetupFelling);
-        },
+        }
     }
 }
 
 #[derive(Debug, Event)]
 struct SetupTransition(SeasonKind);
 
-fn setup_transition(trigger: Trigger<SetupTransition>,
+fn setup_transition(
+    trigger: Trigger<SetupTransition>,
     mut commands: Commands,
     tile_storages: Query<&TileStorage>,
 ) {

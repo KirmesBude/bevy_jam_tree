@@ -333,11 +333,11 @@ fn season_clock_ui(parent: &mut ChildBuilder) {
 }
 
 fn update_season_clock(
-    season: Res<Season>,
+    _season: Res<Season>,
     mut season_clock_texts: Query<&mut Text, With<SeasonClockUi>>,
 ) {
     for mut text in &mut season_clock_texts {
-        text.sections[0].value = "lol".to_string();
+        text.sections[0].value = String::from("lol");
     }
 }
 
@@ -456,16 +456,15 @@ fn update_season_action(
         if season.user_action_resource > 0 {
             text.sections[1].value = format!("\n{} Left", season.user_action_resource);
         } else {
-            text.sections[1].value = format!("\nStart");
+            text.sections[1].value = String::from("\nStart");
         }
     }
 }
 
 fn handle_season_action(
-    mut commands: Commands,
     mut button_query: InteractionQuery<&SeasonActionUi>,
     mut selected_tile: ResMut<SelectedTile>,
-    mut season: ResMut<Season>,
+    season: Res<Season>,
     mut spawn_tree_events: EventWriter<SpawnTree>,
     mut next_season_state_events: EventWriter<NextSeasonState>,
 ) {
@@ -481,10 +480,8 @@ fn handle_season_action(
 
                     selected_tile.0 = None;
                 }
-            } else {
-                if matches!(season.state, SeasonState::UserInput) {
-                    next_season_state_events.send(NextSeasonState(SeasonState::Simulation));
-                }
+            } else if matches!(season.state, SeasonState::UserInput) {
+                next_season_state_events.send(NextSeasonState(season.state.next()));
             }
         }
     }

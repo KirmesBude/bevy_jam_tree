@@ -10,17 +10,13 @@ pub mod logic;
 pub mod state;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((
-       state::plugin,
-       logic::plugin, 
-    ));
+    app.add_plugins((state::plugin, logic::plugin));
     app.register_type::<(Season, SeasonKind)>();
     app.init_resource::<Season>();
 
     app.add_systems(
         Update,
-        (handle_transition)
-            .run_if(in_state(Screen::Playing)),
+        (handle_transition).run_if(in_state(Screen::Playing)),
     );
 }
 
