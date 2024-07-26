@@ -9,5 +9,4 @@ Summer: Can place x amount of fire tiles (Fire spreads to adjacent tree tiles, c
 Autumn: Can place x amount of gust tiles that will create seedlings in that direction; normal growth
 Winter: Can place x amount of storm tiles so they are not cut yet; no growth, seedlings die; All overmature/mature trees are felled, but minimum of 4 of any kind? (good idea?)
 
-Make temporary tree tiles more readable(blue)
 Make seedling have level 1 anyways?
