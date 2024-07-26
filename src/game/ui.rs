@@ -7,7 +7,8 @@ use crate::screen::Screen;
 use crate::ui::palette::{BUTTON_HOVERED_BACKGROUND, BUTTON_PRESSED_BACKGROUND, NODE_BACKGROUND};
 use crate::ui::prelude::{InteractionPalette, InteractionQuery};
 
-use super::season::{Season, StartSeason};
+use super::season::state::{NextSeasonState, SeasonState};
+use super::season::Season;
 use super::spawn::level::{GroundLayer, SelectedTile, TreeLayer};
 use super::spawn::tree::{SpawnTree, Tree};
 
@@ -336,7 +337,7 @@ fn update_season_clock(
     mut season_clock_texts: Query<&mut Text, With<SeasonClockUi>>,
 ) {
     for mut text in &mut season_clock_texts {
-        text.sections[0].value = format!("{:.2}", season.timer.remaining_secs());
+        text.sections[0].value = "lol".to_string();
     }
 }
 
@@ -466,6 +467,7 @@ fn handle_season_action(
     mut selected_tile: ResMut<SelectedTile>,
     mut season: ResMut<Season>,
     mut spawn_tree_events: EventWriter<SpawnTree>,
+    mut next_season_state_events: EventWriter<NextSeasonState>,
 ) {
     for (interaction, _action) in &mut button_query {
         if matches!(interaction, Interaction::Pressed) {
@@ -473,16 +475,15 @@ fn handle_season_action(
                 if let Some(tile_pos) = selected_tile.0 {
                     spawn_tree_events.send(SpawnTree {
                         tile_pos,
-                        tree: Tree::Immature,
+                        tree: Tree::Seedling,
                         use_resource: true,
                     });
 
                     selected_tile.0 = None;
                 }
             } else {
-                if !season.active {
-                    commands.trigger(StartSeason);
-                    season.active = true;
+                if matches!(season.state, SeasonState::UserInput) {
+                    next_season_state_events.send(NextSeasonState(SeasonState::Simulation));
                 }
             }
         }

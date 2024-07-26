@@ -1,21 +1,27 @@
 use bevy::prelude::*;
-use bevy_ecs_tilemap::tiles::{TilePos, TileStorage, TileTextureIndex};
+use bevy_ecs_tilemap::tiles::TileTextureIndex;
+use state::SeasonState;
 
 use crate::screen::Screen;
 
-use super::spawn::tree::{GrowAction, Tree};
-use super::RunGameLogic;
+use super::spawn::tree::Tree;
+
+pub mod logic;
+pub mod state;
 
 pub(super) fn plugin(app: &mut App) {
+    app.add_plugins((
+       state::plugin,
+       logic::plugin, 
+    ));
     app.register_type::<(Season, SeasonKind)>();
     app.init_resource::<Season>();
 
     app.add_systems(
         Update,
-        (tick_season_timer, tick_transition_timer, advance_season)
+        (handle_transition)
             .run_if(in_state(Screen::Playing)),
     );
-    app.observe(transition_to_season);
 }
 
 #[derive(Clone, Copy, Debug, Reflect)]
@@ -67,8 +73,7 @@ impl SeasonKind {
 #[derive(Debug, Reflect, Resource)]
 #[reflect(Resource)]
 pub struct Season {
-    pub active: bool,
-    pub timer: Timer,
+    pub state: SeasonState,
     pub kind: SeasonKind,
     pub user_action_resource: usize,
 }
@@ -76,72 +81,14 @@ pub struct Season {
 impl Default for Season {
     fn default() -> Self {
         Self {
-            active: false,
-            timer: Timer::from_seconds(10.0, TimerMode::Once),
+            state: SeasonState::UserInput,
             kind: SeasonKind::Spring,
             user_action_resource: 4,
         }
     }
 }
 
-fn tick_season_timer(mut commands: Commands, time: Res<Time>, mut season: ResMut<Season>) {
-    if season.active && season.timer.tick(time.delta()).just_finished() {
-        /* Run end of season game tick */
-        commands.trigger(RunGameLogic);
-
-        /* Switch to next season */
-        commands.trigger(TransitionToSeason {
-            next_season: season.kind.next(),
-        });
-    }
-}
-
-#[derive(Debug, Reflect, Event)]
-struct TransitionToSeason {
-    next_season: SeasonKind,
-}
-
-fn transition_to_season(
-    trigger: Trigger<TransitionToSeason>,
-    mut commands: Commands,
-    tile_storages: Query<&TileStorage>,
-) {
-    /* We are adding the SeasonTransition Component with timer based on TilePos to each entity */
-    for tile_storage in &tile_storages {
-        for x in 0..tile_storage.size.x {
-            for y in 0..tile_storage.size.y {
-                if let Some(entity) = tile_storage.get(&TilePos { x, y }) {
-                    commands.entity(entity).insert(SeasonTransition {
-                        timer: Timer::from_seconds(0.1 + 0.1 * (x + y) as f32, TimerMode::Once),
-                        season_kind: trigger.event().next_season,
-                    });
-                }
-            }
-        }
-    }
-}
-
-fn advance_season(
-    mut active: Local<bool>,
-    transitions: Query<(), With<SeasonTransition>>,
-    mut season: ResMut<Season>,
-) {
-    /* Season is finished when no more SeasonTransition components exist*/
-    if *active {
-        if transitions.is_empty() {
-            *season = Season {
-                kind: season.kind.next(),
-                ..default()
-            };
-            *active = false;
-        }
-    } else {
-        /* Need to have seen one first to activate */
-        *active = !transitions.is_empty();
-    }
-}
-
-fn tick_transition_timer(
+fn handle_transition(
     mut commands: Commands,
     time: Res<Time>,
     mut transition_timers: Query<(
@@ -171,6 +118,3 @@ struct SeasonTransition {
     timer: Timer,
     season_kind: SeasonKind,
 }
-
-#[derive(Debug, Event)]
-pub struct StartSeason;
