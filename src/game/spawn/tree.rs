@@ -5,7 +5,7 @@ use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 use itertools::Itertools;
 use rand::Rng;
 
-use crate::game::season::Season;
+use crate::game::season::{Season, StartSeason};
 use crate::screen::Screen;
 
 use super::level::TreeLayer;
@@ -27,6 +27,8 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         (update_tree_index, grow_action).run_if(in_state(Screen::Playing)),
     );
+
+    app.observe(tree_logic);
 }
 
 pub const OVERLAY_TEXTURE_INDEX_TREE: u32 = 0;
@@ -76,6 +78,15 @@ impl Tree {
             Tree::Immature => Some(Tree::Mature),
             Tree::Mature => Some(Tree::Overmature),
             Tree::Overmature => None,
+        }
+    }
+
+    pub fn level(&self) -> u32 {
+        match self {
+            Tree::Seedling => 1,
+            Tree::Immature => 1,
+            Tree::Mature => 1,
+            Tree::Overmature => 2,
         }
     }
 }
@@ -143,48 +154,38 @@ pub struct DespawnTree {
     pub tile_pos: TilePos,
 }
 
-fn tree_game_of_life(
-    time: Res<Time>,
-    mut tick_time: Local<f32>,
-    trees: Query<&TileStorage, With<TreeLayer>>,
-    mut despawn_tree_events: EventWriter<DespawnTree>,
-    mut spawn_tree_events: EventWriter<SpawnTree>,
+/// Goes over the board and assign TreeActions to each tree
+fn tree_logic(
+    _trigger: Trigger<StartSeason>,
+    mut commands: Commands,
+    tree_tile_storage_q: Query<&TileStorage, With<TreeLayer>>,
+    tree_q: Query<(Entity, &Tree, &TilePos)>,
 ) {
-    *tick_time += time.delta_seconds();
+    let tree_tile_storage = tree_tile_storage_q.single();
 
-    if *tick_time >= 5.0 {
-        *tick_time = 0.0;
-
-        let trees = trees.single();
-
-        for x in 0..trees.size.x {
-            for y in 0..trees.size.y {
-                let tile_pos = TilePos { x, y };
-
-                let neighbor_count =
-                    Neighbors::get_square_neighboring_positions(&tile_pos, &trees.size, true)
-                        .entities(trees)
-                        .iter()
-                        .count();
-
-                match trees.get(&tile_pos) {
-                    Some(_) => {
-                        /* Live tree */
-                        if !(2..=3).contains(&neighbor_count) {
-                            despawn_tree_events.send(DespawnTree { tile_pos });
-                        }
+    for (tree_entity, tree, tile_pos) in &tree_q {
+        let neighbor_level =
+            Neighbors::get_square_neighboring_positions(&tile_pos, &tree_tile_storage.size, true)
+                .entities(tree_tile_storage)
+                .iter()
+                .map(|entity| {
+                    if let Ok((_, tree, _)) = tree_q.get(*entity) {
+                        tree.level()
+                    } else {
+                        0
                     }
-                    None => {
-                        /* Dead tree */
-                        if neighbor_count == 3 {
-                            spawn_tree_events.send(SpawnTree {
-                                tile_pos,
-                                tree: Tree::Seedling,
-                                use_resource: false,
-                            });
-                        }
-                    }
-                }
+                })
+                .sum();
+
+        match neighbor_level {
+            0..=2 => {
+                /* Grow */
+                commands.entity(tree_entity).insert(GrowAction::default());
+            }
+            3..=4 => { /* Do not grow */ }
+            _ => {
+                /* Die */
+                commands.entity(tree_entity).insert(DieAction::default());
             }
         }
     }

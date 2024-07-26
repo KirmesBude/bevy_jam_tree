@@ -480,8 +480,10 @@ fn handle_season_action(
                     selected_tile.0 = None;
                 }
             } else {
-                commands.trigger(StartSeason);
-                season.active = true;
+                if !season.active {
+                    commands.trigger(StartSeason);
+                    season.active = true;
+                }
             }
         }
     }

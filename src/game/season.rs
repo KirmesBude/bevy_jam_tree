@@ -16,7 +16,6 @@ pub(super) fn plugin(app: &mut App) {
             .run_if(in_state(Screen::Playing)),
     );
     app.observe(transition_to_season);
-    app.observe(start_season);
 }
 
 #[derive(Clone, Copy, Debug, Reflect)]
@@ -161,12 +160,6 @@ fn tick_transition_timer(
                 0
             };
             texture_index.0 = season_transition.season_kind.texture_index() + offset;
-            println!(
-                "{:?}, {:?}, {:?}",
-                tree,
-                offset,
-                season_transition.season_kind.texture_index()
-            );
 
             commands.entity(entity).remove::<SeasonTransition>();
         }
@@ -181,18 +174,3 @@ struct SeasonTransition {
 
 #[derive(Debug, Event)]
 pub struct StartSeason;
-
-fn start_season(
-    _trigger: Trigger<StartSeason>,
-    mut commands: Commands,
-    tree_q: Query<(Entity, &Tree)>,
-) {
-    for (entity, tree) in &tree_q {
-        match tree {
-            Tree::Seedling | Tree::Immature | Tree::Mature => {
-                commands.entity(entity).insert(GrowAction::new());
-            }
-            Tree::Overmature => { /* Nothing */ }
-        }
-    }
-}
