@@ -11,7 +11,7 @@ use state::SeasonState;
 use crate::screen::Screen;
 
 use super::spawn::{
-    level::{SelectedTile, TreeLayer},
+    level::{Ground, SelectedTile, TreeLayer},
     tree::{SpawnTree, Tree},
 };
 
@@ -115,13 +115,16 @@ fn handle_transition(
         &mut SeasonTransition,
         &mut TileTextureIndex,
         Option<&Tree>,
+        Option<&Ground>,
     )>,
 ) {
-    for (entity, mut season_transition, mut texture_index, tree) in &mut transition_timers {
+    for (entity, mut season_transition, mut texture_index, tree, ground) in &mut transition_timers {
         if season_transition.timer.tick(time.delta()).just_finished() {
             /* Actually do something interesting, like change texture index */
             let offset = if let Some(tree) = tree {
                 tree.texture_index_offset()
+            } else if let Some(ground) = ground {
+                ground.texture_index_offset()
             } else {
                 0
             };

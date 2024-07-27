@@ -62,7 +62,7 @@ impl Ground {
         }
     }
 
-    fn texture_index_offset(&self) -> u32 {
+    pub fn texture_index_offset(&self) -> u32 {
         match self {
             Ground::Normal => 0,
             Ground::Nutrient => 4,
