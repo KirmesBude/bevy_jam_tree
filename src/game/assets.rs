@@ -16,7 +16,7 @@ pub struct ImageAssets {
     pub effect_tileset: Handle<Image>,
 }
 
-#[derive(AssetCollection, Resource)]
+#[derive(AssetCollection, Resource, Default)]
 pub struct UiAssets {
     #[asset(texture_atlas_layout(
         tile_size_x = 64,
