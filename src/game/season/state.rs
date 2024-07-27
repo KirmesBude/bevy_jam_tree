@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 
-use crate::screen::Screen;
+use crate::{
+    game::{assets::SoundtrackAssets, audio::soundtrack::PlaySoundtrack},
+    screen::Screen,
+};
 
 use super::{
     logic::{SetupFelling, SetupGrowing, SetupOvercrowdDying, SetupSeedlingDying, TreeAction},
@@ -100,10 +103,22 @@ fn to_user_input(
 #[derive(Debug, Event)]
 struct SetupUserInput(SeasonKind);
 
-fn setup_user_input(trigger: Trigger<SetupUserInput>, mut season: ResMut<Season>) {
+fn setup_user_input(
+    trigger: Trigger<SetupUserInput>,
+    mut season: ResMut<Season>,
+    mut commands: Commands,
+    soundtrack_assets: Res<SoundtrackAssets>,
+) {
     season.kind = trigger.event().0.next();
     if matches!(season.kind, SeasonKind::Spring) {
         season.year += 1;
+
+        if season.year == 2 {
+            commands.trigger(PlaySoundtrack::Disable);
+            commands.trigger(PlaySoundtrack::Handle(
+                soundtrack_assets.gameplay2.clone_weak(),
+            ));
+        }
     }
     season.user_action_resource = 4; // TODO: Needs to be different per season, probably
 }

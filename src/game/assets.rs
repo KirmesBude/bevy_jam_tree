@@ -54,5 +54,5 @@ pub struct SoundtrackAssets {
     #[asset(path = "audio/soundtracks/Vindsvept - Woodland Lullaby.ogg")]
     pub gameplay: Handle<AudioSource>,
     #[asset(path = "audio/soundtracks/Vindsvept - Season Unending.ogg")]
-    pub _gameplay2: Handle<AudioSource>,
+    pub gameplay2: Handle<AudioSource>,
 }
