@@ -9,7 +9,7 @@ use crate::ui::prelude::{InteractionPalette, InteractionQuery};
 
 use super::season::state::{NextSeasonState, SeasonState};
 use super::season::Season;
-use super::spawn::level::{GroundLayer, SelectedTile, TreeLayer};
+use super::spawn::level::{Ground, GroundLayer, SelectedTile, TreeLayer};
 use super::spawn::tree::Tree;
 use super::Score;
 
@@ -191,18 +191,16 @@ fn update_selected_ground(
     mut selected_ground_texts: Query<&mut Text, With<SelectedTileGroundUi>>,
     season: Res<Season>,
     selected_tile: Res<SelectedTile>,
-    ground_tile_storage: Query<&TileStorage, With<GroundLayer>>, /*, ground: Query<&Ground> */
+    ground_tile_storage: Query<&TileStorage, With<GroundLayer>>,
+    ground_q: Query<&Ground>,
 ) {
     // Do we have anything selected?
     let text_value = if let Some(tile_pos) = selected_tile.0 {
-        if let Some(_entity) = ground_tile_storage.single().get(&tile_pos) {
-            /* if let Ok(ground) = grounds.get(entity) */
-            {
-                format!(
-                    "{} ({})",
-                    /* tree.name() */ "Ground",
-                    season.kind.header()
-                )
+        if let Some(entity) = ground_tile_storage.single().get(&tile_pos) {
+            if let Ok(ground) = ground_q.get(entity) {
+                format!("{} ({})", ground.name(), season.kind.header())
+            } else {
+                "None".into()
             }
         } else {
             "None".into()

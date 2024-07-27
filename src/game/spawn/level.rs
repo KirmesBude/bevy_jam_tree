@@ -42,6 +42,21 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
+#[derive(Debug, Component, Reflect)]
+pub enum Ground {
+    Normal,
+    Nutrient,
+}
+
+impl Ground {
+    pub fn name(&self) -> &'static str {
+        match self {
+            Ground::Normal => "Normal",
+            Ground::Nutrient => "Nutrient",
+        }
+    }
+}
+
 #[derive(Event, Debug)]
 pub struct SpawnLevel;
 
@@ -72,14 +87,26 @@ fn spawn_level(
     let tilemap_entity = commands.spawn_empty().id();
     let tilemap_id = TilemapId(tilemap_entity);
 
-    fill_tilemap_rect(
-        TileTextureIndex(0),
-        TilePos { x: 0, y: 0 },
-        map_size,
-        tilemap_id,
-        &mut commands,
-        &mut tile_storage,
-    );
+    commands.entity(tilemap_id.0).with_children(|parent| {
+        for x in 0..map_size.x {
+            for y in 0..map_size.y {
+                let tile_pos = TilePos { x, y };
+
+                let tile_entity = parent
+                    .spawn((
+                        TileBundle {
+                            position: tile_pos,
+                            tilemap_id,
+                            texture_index: TileTextureIndex(0),
+                            ..Default::default()
+                        },
+                        Ground::Normal,
+                    ))
+                    .id();
+                tile_storage.set(&tile_pos, tile_entity);
+            }
+        }
+    });
 
     let tile_size = TilemapTileSize { x: 64.0, y: 112.0 };
     let grid_size = TilemapGridSize { x: 64.0, y: 32.0 };
