@@ -207,9 +207,9 @@ fn autumn_user_action(
                     let f = |direction: SquareDirection| {
                         if direction.is_cardinal() {
                             square_pos
-                            .offset(&direction)
-                            .offset(&direction)
-                            .as_tile_pos(&tile_storage.size)
+                                .offset(&direction)
+                                .offset(&direction)
+                                .as_tile_pos(&tile_storage.size)
                         } else {
                             None
                         }

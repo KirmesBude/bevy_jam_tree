@@ -205,7 +205,10 @@ fn handle_tree_action(
             if tree_action.timer.tick(time.delta()).just_finished() {
                 tree_action.trigger(&mut commands, entity);
 
-                commands.entity(entity).remove::<TreeAction>();
+                // TODO: Could be nicer, but we only need to remove for grow
+                if matches!(tree_action.kind, TreeActionKind::Growing) {
+                    commands.entity(entity).remove::<TreeAction>();
+                }
             }
         }
     }
@@ -264,7 +267,7 @@ fn burn(
 
         if *counter == 1 {
             // spread fire
-            // TODO: This does not work, because could be empty tile
+            debug!("Spread fire from {:?}", tile_pos);
             let tile_storage = tree_tile_storage_q.single();
             Neighbors::get_square_neighboring_positions(tile_pos, &tile_storage.size, true)
                 .entities(tile_storage)
