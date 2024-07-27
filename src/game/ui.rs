@@ -1,4 +1,6 @@
-use bevy::color::palettes::css::{BLACK, BLUE, BROWN, RED, WHITE, YELLOW};
+use bevy::color::palettes::css::{
+    BLACK, BLUE, BROWN, GREEN, RED, SLATE_GREY, WHITE, WHITE_SMOKE, YELLOW,
+};
 use bevy::prelude::*;
 use bevy::ui::Val::*;
 use bevy_ecs_tilemap::tiles::TileStorage;
@@ -7,6 +9,7 @@ use crate::screen::Screen;
 use crate::ui::palette::{BUTTON_HOVERED_BACKGROUND, BUTTON_PRESSED_BACKGROUND, NODE_BACKGROUND};
 use crate::ui::prelude::{InteractionPalette, InteractionQuery};
 
+use super::assets::{ImageAssets, UiAssets};
 use super::season::state::{NextSeasonState, SeasonState};
 use super::season::Season;
 use super::spawn::level::{Ground, GroundLayer, SelectedTile, TreeLayer};
@@ -19,8 +22,10 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            update_selected_tree,
-            update_selected_ground,
+            update_selected_tree_image,
+            update_selected_tree_text,
+            update_selected_ground_image,
+            update_selected_ground_text,
             update_season_header,
             update_season_clock,
             update_season_description,
@@ -111,43 +116,84 @@ fn selected_tile_tree_ui(parent: &mut ChildBuilder) {
         ))
         .with_children(|parent| {
             parent.spawn((
+                ImageBundle {
+                    style: Style {
+                        width: Val::Percent(100.),
+                        height: Val::Percent(86.),
+                        ..default()
+                    },
+                    background_color: BackgroundColor(SLATE_GREY.into()),
+                    ..default()
+                },
+                TextureAtlas::default(),
+                Outline::new(Val::Percent(2.0), Val::ZERO, GREEN.into()),
+                SelectedTileTreeUi,
+            ));
+            parent.spawn((
                 TextBundle::from_section(
-                    "Selected Tree",
+                    "None",
                     TextStyle {
                         font_size: 40.0,
                         color: BLACK.into(),
                         ..default()
                     },
-                ),
+                )
+                .with_background_color(WHITE_SMOKE.into()),
+                Outline::new(Val::Percent(2.0), Val::ZERO, GREEN.into()),
                 SelectedTileTreeUi,
             ));
         });
 }
 
-fn update_selected_tree(
-    mut selected_tree_texts: Query<&mut Text, With<SelectedTileTreeUi>>,
+fn update_selected_tree_image(
+    mut selected_tree_images: Query<(&mut UiImage, &mut TextureAtlas), With<SelectedTileTreeUi>>,
     season: Res<Season>,
     selected_tile: Res<SelectedTile>,
     tree_tile_storage: Query<&TileStorage, With<TreeLayer>>,
     trees: Query<&Tree>,
+    image_assets: Res<ImageAssets>,
+    ui_assets: Res<UiAssets>,
 ) {
-    // Do we have anything selected?
-    let text_value = if let Some(tile_pos) = selected_tile.0 {
-        if let Some(entity) = tree_tile_storage.single().get(&tile_pos) {
-            if let Ok(tree) = trees.get(entity) {
-                format!("{} ({})", tree.name(), season.kind.header())
-            } else {
-                "None".into()
-            }
-        } else {
-            "None".into()
-        }
-    } else {
-        "None".into()
-    };
+    for (mut image, mut atlas) in &mut selected_tree_images {
+        *image = UiImage::default();
+        *atlas = TextureAtlas::default();
 
+        // Do we have anything selected?
+        if let Some(tile_pos) = selected_tile.0 {
+            if let Some(entity) = tree_tile_storage.single().get(&tile_pos) {
+                if let Ok(tree) = trees.get(entity) {
+                    *image = UiImage {
+                        texture: image_assets.tree_tileset.clone_weak(),
+                        ..default()
+                    };
+                    *atlas = TextureAtlas {
+                        layout: ui_assets.tree_layout.clone_weak(),
+                        index: (tree.texture_index_offset() + season.kind.texture_index()) as usize,
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn update_selected_tree_text(
+    mut selected_tree_texts: Query<&mut Text, With<SelectedTileTreeUi>>,
+    selected_tile: Res<SelectedTile>,
+    tree_tile_storage: Query<&TileStorage, With<TreeLayer>>,
+    trees: Query<&Tree>,
+) {
     for mut text in &mut selected_tree_texts {
-        text.sections[0].value.clone_from(&text_value);
+        text.sections[0].value = String::from("None");
+
+        // Do we have anything selected?
+        if let Some(tile_pos) = selected_tile.0 {
+            if let Some(entity) = tree_tile_storage.single().get(&tile_pos) {
+                if let Ok(tree) = trees.get(entity) {
+                    let text_value = tree.name().to_string();
+                    text.sections[0].value.clone_from(&text_value);
+                }
+            }
+        }
     }
 }
 
@@ -174,43 +220,88 @@ fn selected_tile_ground_ui(parent: &mut ChildBuilder) {
         ))
         .with_children(|parent| {
             parent.spawn((
+                ImageBundle {
+                    style: Style {
+                        width: Val::Percent(100.),
+                        height: Val::Percent(86.),
+                        ..default()
+                    },
+                    background_color: BackgroundColor(SLATE_GREY.into()),
+                    ..default()
+                },
+                TextureAtlas::default(),
+                Outline::new(Val::Percent(2.0), Val::ZERO, GREEN.into()),
+                SelectedTileGroundUi,
+            ));
+            parent.spawn((
                 TextBundle::from_section(
-                    "Selected Ground",
+                    "None",
                     TextStyle {
                         font_size: 40.0,
                         color: BLACK.into(),
                         ..default()
                     },
-                ),
+                )
+                .with_background_color(WHITE_SMOKE.into()),
+                Outline::new(Val::Percent(2.0), Val::ZERO, GREEN.into()),
                 SelectedTileGroundUi,
             ));
         });
 }
 
-fn update_selected_ground(
-    mut selected_ground_texts: Query<&mut Text, With<SelectedTileGroundUi>>,
+fn update_selected_ground_image(
+    mut selected_ground_images: Query<
+        (&mut UiImage, &mut TextureAtlas),
+        With<SelectedTileGroundUi>,
+    >,
     season: Res<Season>,
     selected_tile: Res<SelectedTile>,
     ground_tile_storage: Query<&TileStorage, With<GroundLayer>>,
     ground_q: Query<&Ground>,
+    image_assets: Res<ImageAssets>,
+    ui_assets: Res<UiAssets>,
 ) {
-    // Do we have anything selected?
-    let text_value = if let Some(tile_pos) = selected_tile.0 {
-        if let Some(entity) = ground_tile_storage.single().get(&tile_pos) {
-            if let Ok(ground) = ground_q.get(entity) {
-                format!("{} ({})", ground.name(), season.kind.header())
-            } else {
-                "None".into()
-            }
-        } else {
-            "None".into()
-        }
-    } else {
-        "None".into()
-    };
+    for (mut image, mut atlas) in &mut selected_ground_images {
+        *image = UiImage::default();
+        *atlas = TextureAtlas::default();
 
+        // Do we have anything selected?
+        if let Some(tile_pos) = selected_tile.0 {
+            if let Some(entity) = ground_tile_storage.single().get(&tile_pos) {
+                if let Ok(ground) = ground_q.get(entity) {
+                    *image = UiImage {
+                        texture: image_assets.ground_tileset.clone_weak(),
+                        ..default()
+                    };
+                    *atlas = TextureAtlas {
+                        layout: ui_assets.ground_layout.clone_weak(),
+                        index: (ground.texture_index_offset() + season.kind.texture_index())
+                            as usize,
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn update_selected_ground_text(
+    mut selected_ground_texts: Query<&mut Text, With<SelectedTileGroundUi>>,
+    selected_tile: Res<SelectedTile>,
+    ground_tile_storage: Query<&TileStorage, With<GroundLayer>>,
+    ground_q: Query<&Ground>,
+) {
     for mut text in &mut selected_ground_texts {
-        text.sections[0].value.clone_from(&text_value);
+        text.sections[0].value = String::from("None");
+
+        // Do we have anything selected?
+        if let Some(tile_pos) = selected_tile.0 {
+            if let Some(entity) = ground_tile_storage.single().get(&tile_pos) {
+                if let Ok(ground) = ground_q.get(entity) {
+                    let text_value = ground.name().to_string();
+                    text.sections[0].value.clone_from(&text_value);
+                }
+            }
+        }
     }
 }
 

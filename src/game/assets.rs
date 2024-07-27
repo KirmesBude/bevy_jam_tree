@@ -17,6 +17,27 @@ pub struct ImageAssets {
 }
 
 #[derive(AssetCollection, Resource)]
+pub struct UiAssets {
+    #[asset(texture_atlas_layout(
+        tile_size_x = 64,
+        tile_size_y = 48,
+        columns = 4,
+        rows = 2,
+        padding_y = 64,
+        offset_y = 64
+    ))] //TODO: Bug in bevy_asset_loader?
+    pub ground_layout: Handle<TextureAtlasLayout>,
+    #[asset(texture_atlas_layout(
+        tile_size_x = 64,
+        tile_size_y = 96,
+        columns = 4,
+        rows = 4,
+        padding_y = 16
+    ))]
+    pub tree_layout: Handle<TextureAtlasLayout>,
+}
+
+#[derive(AssetCollection, Resource)]
 pub struct SfxAssets {
     #[asset(path = "audio/sfx/button_hover.ogg")]
     pub button_hover: Handle<AudioSource>,

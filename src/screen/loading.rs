@@ -6,7 +6,7 @@ use bevy_asset_loader::prelude::*;
 
 use super::Screen;
 use crate::{
-    game::assets::{ImageAssets, SfxAssets, SoundtrackAssets},
+    game::assets::{ImageAssets, SfxAssets, SoundtrackAssets, UiAssets},
     ui::prelude::*,
 };
 
@@ -18,7 +18,8 @@ pub(super) fn plugin(app: &mut App) {
             .continue_to_state(Screen::Title)
             .load_collection::<ImageAssets>()
             .load_collection::<SfxAssets>()
-            .load_collection::<SoundtrackAssets>(),
+            .load_collection::<SoundtrackAssets>()
+            .load_collection::<UiAssets>(),
     );
 }
 

@@ -11,7 +11,6 @@ Winter: Can place x amount of storm tiles so they are not cut yet; no growth, se
 
 Make seedling have level 1 anyways?
 
-Implement UiImage
 Finish UI
 Finish assets
 Balancing
