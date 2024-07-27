@@ -75,10 +75,10 @@ impl SeasonKind {
 
     pub fn description(&self) -> &'static str {
         match self {
-            SeasonKind::Spring => "User action: Plant seeds; Passive effect: No trees die",
-            SeasonKind::Summer => "User action: Place/combat(?) wildfires; Passive effects: Accelerated growth, random new trees",
-            SeasonKind::Autumn => "User action: Wind direction?; Passive effect: Trees multiply",
-            SeasonKind::Winter => "User action: AoE Heavy Snowfall(No trees are felled there); Passive effect: Trees are felled (mature/overmature)",
+            SeasonKind::Spring => "Place 4 seedlings in spring and watch them grow.",
+            SeasonKind::Summer => "No trees ever die in summer...\nBut you have to set fire to a tree. Be careful, it spreads quickly. Leaves behind nutrient soil for mature and overmature trees.",
+            SeasonKind::Autumn => "Place a good gust on any tree to let it drop its seeds in a cross pattern one tile away.",
+            SeasonKind::Winter => "Any seedlings will succumb to the cold. Any mature and overmature trees are taken by the local folk for points.\nDirect snow storms to selected trees to keep them around for another time.",
         }
     }
 

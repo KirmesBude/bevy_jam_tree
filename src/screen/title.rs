@@ -20,6 +20,7 @@ pub(super) fn plugin(app: &mut App) {
 #[reflect(Component)]
 enum TitleAction {
     Play,
+    HowToPlay,
     Credits,
     /// Exit doesn't work well with embedded applications.
     #[cfg(not(target_family = "wasm"))]
@@ -32,6 +33,7 @@ fn enter_title(mut commands: Commands, soundtrack_assets: Res<SoundtrackAssets>)
         .insert(StateScoped(Screen::Title))
         .with_children(|children| {
             children.button("Play").insert(TitleAction::Play);
+            children.button("HowToPlay").insert(TitleAction::HowToPlay);
             children.button("Credits").insert(TitleAction::Credits);
 
             #[cfg(not(target_family = "wasm"))]
@@ -50,6 +52,7 @@ fn handle_title_action(
         if matches!(interaction, Interaction::Pressed) {
             match action {
                 TitleAction::Play => next_screen.set(Screen::Playing),
+                TitleAction::HowToPlay => next_screen.set(Screen::HowToPlay),
                 TitleAction::Credits => next_screen.set(Screen::Credits),
 
                 #[cfg(not(target_family = "wasm"))]

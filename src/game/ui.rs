@@ -453,7 +453,7 @@ fn season_description_ui(parent: &mut ChildBuilder) {
                 TextBundle::from_section(
                     "Season Description",
                     TextStyle {
-                        font_size: 40.0,
+                        font_size: 26.0,
                         color: BLACK.into(),
                         ..default()
                     },

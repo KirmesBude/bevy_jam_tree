@@ -2,6 +2,7 @@
 
 mod credits;
 mod game_over;
+mod how_to_play;
 mod loading;
 mod playing;
 mod splash;
@@ -20,6 +21,7 @@ pub(super) fn plugin(app: &mut App) {
         credits::plugin,
         playing::plugin,
         game_over::plugin,
+        how_to_play::plugin,
     ));
 }
 
@@ -33,4 +35,5 @@ pub enum Screen {
     Credits,
     Playing,
     GameOver,
+    HowToPlay,
 }
