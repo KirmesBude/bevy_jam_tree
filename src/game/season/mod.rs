@@ -279,7 +279,7 @@ fn winter_user_action(
 
         if let Some(entity) = tile_storage.get(&tile_pos) {
             commands.entity(entity).insert(BadWeather);
-            season.user_action_resource -= 1;
+            season.user_action_resource -= 2;
             selected_tile.0 = None;
         }
     }
