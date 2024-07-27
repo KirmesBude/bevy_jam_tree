@@ -140,20 +140,25 @@ fn spawn_level(
     let tilemap_id = TilemapId(tilemap_entity);
 
     commands.entity(tilemap_id.0).with_children(|parent| {
-        let tile_pos = TilePos { x: 4, y: 4 };
-
-        let tile_entity = parent
-            .spawn((
-                TileBundle {
-                    position: tile_pos,
-                    tilemap_id,
-                    texture_index: TileTextureIndex(OVERLAY_TEXTURE_INDEX_TREE),
-                    ..Default::default()
-                },
-                Tree::default(),
-            ))
-            .id();
-        tile_storage.set(&tile_pos, tile_entity);
+        for tile_pos in [
+            TilePos::new(2, 3),
+            TilePos::new(5, 4),
+            TilePos::new(3, 3),
+            TilePos::new(5, 6),
+        ] {
+            let tile_entity = parent
+                .spawn((
+                    TileBundle {
+                        position: tile_pos,
+                        tilemap_id,
+                        texture_index: TileTextureIndex(OVERLAY_TEXTURE_INDEX_TREE),
+                        ..Default::default()
+                    },
+                    Tree::Immature,
+                ))
+                .id();
+            tile_storage.set(&tile_pos, tile_entity);
+        }
     });
 
     let tile_size = TilemapTileSize { x: 64.0, y: 112.0 };

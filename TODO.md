@@ -12,4 +12,5 @@ Winter: Can place x amount of storm tiles so they are not cut yet; no growth, se
 Make seedling have level 1 anyways?
 
 Implement effects on effect layer
-Implement good soil
+Make autumn tree seed 2 tiles away
+Fix burning

@@ -283,6 +283,8 @@ fn fell(
     tree_q: Query<(&Tree, &TilePos)>,
     mut despawn_tree_events: EventWriter<DespawnTree>,
     mut score: ResMut<Score>,
+    mut ground_q: Query<&mut Ground>,
+    ground_tile_storage_q: Query<&TileStorage, With<GroundLayer>>,
 ) {
     let entity = trigger.event().0;
 
@@ -291,6 +293,21 @@ fn fell(
             tile_pos: *tile_pos,
         });
 
-        score.0 += tree.score();
+        let mut tree_score = tree.score();
+
+        let tile_storage = ground_tile_storage_q.single();
+        if let Some(entity) = tile_storage.get(tile_pos) {
+            if let Ok(mut ground) = ground_q.get_mut(entity) {
+                if matches!(*ground, Ground::Nutrient) {
+                    tree_score *= 3;
+                    *ground = Ground::Normal;
+                }
+            }
+        }
+
+        score.0 += tree_score;
     }
 }
+
+
+// Effects
