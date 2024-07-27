@@ -14,4 +14,3 @@ Make seedling have level 1 anyways?
 Make autumn tree seed 2 tiles away
 Fix burning
 Implement UiImage
-Implement Ground texture index

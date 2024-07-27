@@ -8,6 +8,7 @@ use bevy_ecs_tilemap::TilemapPlugin;
 use bevy_ecs_tilemap::prelude::*;
 
 use crate::game::assets::ImageAssets;
+use crate::game::season::Season;
 use crate::screen::Screen;
 
 use super::tree::Tree;
@@ -40,6 +41,11 @@ pub(super) fn plugin(app: &mut App) {
             .chain()
             .run_if(in_state(Screen::Playing)),
     );
+
+    app.add_systems(
+        Update,
+        update_ground_index.run_if(in_state(Screen::Playing)),
+    );
 }
 
 #[derive(Debug, Component, Reflect)]
@@ -53,6 +59,13 @@ impl Ground {
         match self {
             Ground::Normal => "Normal",
             Ground::Nutrient => "Nutrient",
+        }
+    }
+
+    fn texture_index_offset(&self) -> u32 {
+        match self {
+            Ground::Normal => 0,
+            Ground::Nutrient => 4,
         }
     }
 }
@@ -333,5 +346,16 @@ fn update_selected_tile_color(
                 *tile_colors = TileColor(SELECTED_COLOR);
             }
         }
+    }
+}
+
+fn update_ground_index(
+    mut ground_q: Query<(&mut TileTextureIndex, &Ground), Changed<Ground>>,
+    season: Res<Season>,
+) {
+    for (mut texture_index, ground) in &mut ground_q {
+        /* Actually do something interesting, like change texture index */
+        let offset = ground.texture_index_offset();
+        texture_index.0 = season.kind.texture_index() + offset;
     }
 }
