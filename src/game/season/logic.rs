@@ -10,7 +10,7 @@ use rand_core::RngCore;
 use crate::{
     game::{
         spawn::{
-            level::TreeLayer,
+            level::{Ground, GroundLayer, TreeLayer},
             tree::{grow_logic, overcrowd_dying_logic, DespawnTree, Tree},
         },
         Score,
@@ -227,6 +227,7 @@ fn die(
 #[derive(Debug, Event)]
 pub struct Burn(Entity);
 
+//TODO: Split up somehow
 fn burn(
     trigger: Trigger<Burn>,
     mut entity_map: Local<EntityHashMap<usize>>,
@@ -235,10 +236,12 @@ fn burn(
     mut commands: Commands,
     mut despawn_tree_events: EventWriter<DespawnTree>,
     mut rng: ResMut<GlobalEntropy<WyRand>>,
+    mut ground_q: Query<&mut Ground>,
+    ground_tile_storage_q: Query<&TileStorage, With<GroundLayer>>,
 ) {
     let entity = trigger.event().0;
 
-    if let Ok((_tree, tile_pos)) = tree_q.get(entity) {
+    if let Ok((tree, tile_pos)) = tree_q.get(entity) {
         let counter = entity_map.entry(entity).or_insert(0);
         *counter += 1;
 
@@ -259,7 +262,15 @@ fn burn(
                 tile_pos: *tile_pos,
             });
             entity_map.remove(&entity);
-            //TODO: Make ground good soil
+
+            if matches!(tree, Tree::Mature | Tree::Overmature) {
+                let tile_storage = ground_tile_storage_q.single();
+                if let Some(entity) = tile_storage.get(tile_pos) {
+                    if let Ok(mut ground) = ground_q.get_mut(entity) {
+                        *ground = Ground::Nutrient;
+                    }
+                }
+            }
         }
     }
 }
