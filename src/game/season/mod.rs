@@ -195,6 +195,7 @@ pub struct AutumnUserAction;
 
 fn autumn_user_action(
     _trigger: Trigger<AutumnUserAction>,
+    mut season: ResMut<Season>,
     mut selected_tile: ResMut<SelectedTile>,
     mut spawn_tree_events: EventWriter<SpawnTree>,
     tree_q: Query<&Tree>,
@@ -223,10 +224,11 @@ fn autumn_user_action(
                             spawn_tree_events.send(SpawnTree {
                                 tile_pos: *tile_pos,
                                 tree: Tree::Seedling,
-                                use_resource: true,
+                                use_resource: false,
                             });
                         });
 
+                    season.user_action_resource = 0;
                     selected_tile.0 = None;
                 }
             }

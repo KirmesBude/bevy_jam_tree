@@ -546,7 +546,7 @@ fn update_season_action(
         if matches!(season.state, SeasonState::UserInput) {
             text.sections[0].value = String::from("Action");
             if season.user_action_resource > 0 {
-                text.sections[1].value = format!("\n{} Left", season.user_action_resource);
+                text.sections[1].value = String::from("");
             } else {
                 text.sections[1].value = String::from("\nStart");
             }

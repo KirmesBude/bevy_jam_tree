@@ -14,5 +14,3 @@ Make seedling have level 1 anyways?
 Finish UI
 Finish assets
 Balancing
-Fix autumn resources
-zoom in slightly?
