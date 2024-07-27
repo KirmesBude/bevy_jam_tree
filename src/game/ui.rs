@@ -296,6 +296,7 @@ fn update_season_header(
 ) {
     for mut text in &mut season_header_texts {
         text.sections[0].value = season.kind.header().into();
+        text.sections[1].value = format!("\nYear {}", season.year + 1);
     }
 }
 

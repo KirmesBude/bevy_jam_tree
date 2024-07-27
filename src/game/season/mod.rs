@@ -95,6 +95,7 @@ impl SeasonKind {
 #[derive(Debug, Reflect, Resource)]
 #[reflect(Resource)]
 pub struct Season {
+    pub year: u32,
     pub state: SeasonState,
     pub kind: SeasonKind,
     pub user_action_resource: usize,
@@ -103,6 +104,7 @@ pub struct Season {
 impl Default for Season {
     fn default() -> Self {
         Self {
+            year: 0,
             state: SeasonState::UserInput,
             kind: SeasonKind::Spring,
             user_action_resource: 4,
