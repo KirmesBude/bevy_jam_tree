@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 use bevy_ecs_tilemap::{
-    helpers::square_grid::neighbors::Neighbors,
+    helpers::square_grid::{
+        neighbors::{Neighbors, SquareDirection},
+        SquarePos,
+    },
     tiles::{TileStorage, TileTextureIndex},
 };
 use bevy_prng::WyRand;
@@ -200,67 +203,29 @@ fn autumn_user_action(
         if let Some(entity) = tile_storage.checked_get(&tile_pos) {
             if let Ok(tree) = tree_q.get(entity) {
                 if matches!(tree, Tree::Mature | Tree::Overmature) {
-                    Neighbors::get_square_neighboring_positions(
-                        &tile_pos,
-                        &tile_storage.size,
-                        false,
-                    )
-                    .iter()
-                    .for_each(|tile_pos| {
-                        spawn_tree_events.send(SpawnTree {
-                            tile_pos: *tile_pos,
-                            tree: Tree::Seedling,
-                            use_resource: true,
+                    let square_pos = SquarePos::from(&tile_pos);
+                    let f = |direction: SquareDirection| {
+                        if direction.is_cardinal() {
+                            square_pos
+                            .offset(&direction)
+                            .offset(&direction)
+                            .as_tile_pos(&tile_storage.size)
+                        } else {
+                            None
+                        }
+                    };
+
+                    Neighbors::from_directional_closure(f)
+                        .iter()
+                        .for_each(|tile_pos| {
+                            spawn_tree_events.send(SpawnTree {
+                                tile_pos: *tile_pos,
+                                tree: Tree::Seedling,
+                                use_resource: true,
+                            });
                         });
-                    });
 
                     selected_tile.0 = None;
-
-                    /*
-                    if tile_pos.x > 0 {
-                                    spawn_tree_events.send(SpawnTree {
-                                        tile_pos: TilePos {
-                                            x: tile_pos.x - 1,
-                                            y: tile_pos.y,
-                                        },
-                                        tree: Tree::Seedling,
-                                        use_resource: true,
-                                    });
-                                }
-
-                                if tile_pos.x < tile_storage.size.x - 1 {
-                                    spawn_tree_events.send(SpawnTree {
-                                        tile_pos: TilePos {
-                                            x: tile_pos.x + 1,
-                                            y: tile_pos.y,
-                                        },
-                                        tree: Tree::Seedling,
-                                        use_resource: true,
-                                    });
-                                }
-
-                                if tile_pos.y > 0 {
-                                    spawn_tree_events.send(SpawnTree {
-                                        tile_pos: TilePos {
-                                            x: tile_pos.x,
-                                            y: tile_pos.y - 1,
-                                        },
-                                        tree: Tree::Seedling,
-                                        use_resource: true,
-                                    });
-                                }
-
-                                if tile_pos.y < tile_storage.size.y - 1 {
-                                    spawn_tree_events.send(SpawnTree {
-                                        tile_pos: TilePos {
-                                            x: tile_pos.x,
-                                            y: tile_pos.y + 1,
-                                        },
-                                        tree: Tree::Seedling,
-                                        use_resource: true,
-                                    });
-                                }
-                    */
                 }
             }
         }
