@@ -1,7 +1,8 @@
 use bevy::{ecs::entity::EntityHashMap, prelude::*};
 use bevy_ecs_tilemap::{
     helpers::square_grid::neighbors::Neighbors,
-    tiles::{TilePos, TileStorage},
+    map::TilemapId,
+    tiles::{TileBundle, TilePos, TileStorage, TileTextureIndex},
 };
 use bevy_prng::WyRand;
 use bevy_rand::prelude::GlobalEntropy;
@@ -10,7 +11,7 @@ use rand_core::RngCore;
 use crate::{
     game::{
         spawn::{
-            level::{Ground, GroundLayer, TreeLayer},
+            level::{EffectLayer, Ground, GroundLayer, TreeLayer},
             tree::{grow_logic, overcrowd_dying_logic, DespawnTree, Tree},
         },
         Score,
@@ -35,7 +36,14 @@ pub(super) fn plugin(app: &mut App) {
 
     app.add_systems(
         Update,
-        (handle_tree_action).run_if(in_state(Screen::Playing)),
+        (
+            handle_tree_action,
+            remove_effects,
+            handle_effects,
+            handle_bad_weather,
+        )
+            .chain()
+            .run_if(in_state(Screen::Playing)),
     );
 }
 
@@ -127,6 +135,15 @@ impl TreeActionKind {
             TreeActionKind::Dying => commands.trigger(Die(entity)),
             TreeActionKind::Burning => commands.trigger(Burn(entity)),
             TreeActionKind::Felling => commands.trigger(Fell(entity)),
+        }
+    }
+
+    fn effect_texture_index(&self) -> u32 {
+        match self {
+            TreeActionKind::Growing => 0,
+            TreeActionKind::Dying => 1,
+            TreeActionKind::Burning => 2,
+            TreeActionKind::Felling => 3,
         }
     }
 }
@@ -309,5 +326,65 @@ fn fell(
     }
 }
 
-
 // Effects
+// TODO: Not ideal this way
+fn remove_effects(
+    mut commands: Commands,
+    mut effect_tile_storage_q: Query<&mut TileStorage, With<EffectLayer>>,
+) {
+    let mut tile_storage = effect_tile_storage_q.single_mut();
+
+    for x in 0..tile_storage.size.x {
+        for y in 0..tile_storage.size.y {
+            let tile_pos = TilePos { x, y };
+            if let Some(entity) = tile_storage.get(&tile_pos) {
+                commands.entity(entity).despawn();
+            }
+            tile_storage.remove(&tile_pos);
+        }
+    }
+}
+
+fn handle_effects(
+    tree_q: Query<(&TilePos, &TreeAction), Without<BadWeather>>,
+    mut commands: Commands,
+    mut effect_tile_storage_q: Query<(Entity, &mut TileStorage), With<EffectLayer>>,
+) {
+    let (tile_map_entity, mut tile_storage) = effect_tile_storage_q.single_mut();
+    for (tile_pos, tree_action) in &tree_q {
+        commands.entity(tile_map_entity).with_children(|parent| {
+            let entity = parent
+                .spawn(TileBundle {
+                    position: *tile_pos,
+                    texture_index: TileTextureIndex(tree_action.kind.effect_texture_index()),
+                    tilemap_id: TilemapId(tile_map_entity),
+                    ..default()
+                })
+                .id();
+
+            tile_storage.set(tile_pos, entity);
+        });
+    }
+}
+
+fn handle_bad_weather(
+    tree_q: Query<&TilePos, With<BadWeather>>,
+    mut commands: Commands,
+    mut effect_tile_storage_q: Query<(Entity, &mut TileStorage), With<EffectLayer>>,
+) {
+    let (tile_map_entity, mut tile_storage) = effect_tile_storage_q.single_mut();
+    for tile_pos in &tree_q {
+        commands.entity(tile_map_entity).with_children(|parent| {
+            let entity = parent
+                .spawn(TileBundle {
+                    position: *tile_pos,
+                    texture_index: TileTextureIndex(4),
+                    tilemap_id: TilemapId(tile_map_entity),
+                    ..default()
+                })
+                .id();
+
+            tile_storage.set(tile_pos, entity);
+        });
+    }
+}

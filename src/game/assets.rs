@@ -13,7 +13,7 @@ pub struct ImageAssets {
     pub tree_tileset: Handle<Image>,
     #[asset(path = "images/effect_tileset.png")]
     #[asset(image(sampler = nearest))]
-    pub _effect_tileset: Handle<Image>,
+    pub effect_tileset: Handle<Image>,
 }
 
 #[derive(AssetCollection, Resource)]

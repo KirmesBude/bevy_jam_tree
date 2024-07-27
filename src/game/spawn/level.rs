@@ -184,6 +184,36 @@ fn spawn_level(
         TreeLayer,
         StateScoped(Screen::Playing),
     ));
+
+    // Effect Layer
+    let texture_handle = image_assets.effect_tileset.clone_weak();
+
+    let tile_storage = TileStorage::empty(map_size);
+    let tilemap_entity = commands.spawn_empty().id();
+
+    let tile_size = TilemapTileSize { x: 64.0, y: 112.0 };
+    let grid_size = TilemapGridSize { x: 64.0, y: 32.0 };
+    let map_type = TilemapType::Isometric(IsoCoordSystem::Diamond);
+
+    commands.entity(tilemap_entity).insert((
+        Name::new("EffectLayer"),
+        TilemapBundle {
+            grid_size,
+            size: map_size,
+            storage: tile_storage,
+            texture: TilemapTexture::Single(texture_handle),
+            tile_size,
+            map_type,
+            render_settings: TilemapRenderSettings {
+                render_chunk_size: UVec2::new(MAP_SIZE, 1),
+                y_sort: true,
+            },
+            transform: get_tilemap_center_transform(&map_size, &grid_size, &map_type, 2.0),
+            ..Default::default()
+        },
+        EffectLayer,
+        StateScoped(Screen::Playing),
+    ));
 }
 
 const HIGHLIGHT_COLOR: Color = bevy::prelude::Color::Srgba(RED);
