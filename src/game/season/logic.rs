@@ -172,7 +172,7 @@ impl TreeAction {
     }
 
     pub fn burning(rng: &mut GlobalEntropy<WyRand>) -> Self {
-        let duration = (rng.next_u32() % 30) as f32 * 0.1 + 1.0;
+        let duration = (rng.next_u32() % 30) as f32 * 0.1 + 1.0; // TODO: Needs to be shorter
         Self {
             kind: TreeActionKind::Burning,
             timer: Timer::from_seconds(duration, TimerMode::Repeating),
@@ -275,7 +275,7 @@ fn burn(
                 .for_each(|entity| {
                     commands
                         .entity(*entity)
-                        .insert(TreeAction::burning(&mut rng));
+                        .insert(TreeAction::burning(&mut rng)); // TODO: Only do this if they do not already have a burning component
                 });
         } else {
             despawn_tree_events.send(DespawnTree {

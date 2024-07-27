@@ -15,3 +15,5 @@ Implement UiImage
 Finish UI
 Finish assets
 Balancing
+Fix autumn resources
+zoom in slightly?

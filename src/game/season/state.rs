@@ -102,7 +102,9 @@ struct SetupUserInput(SeasonKind);
 
 fn setup_user_input(trigger: Trigger<SetupUserInput>, mut season: ResMut<Season>) {
     season.kind = trigger.event().0.next();
-    season.year += 1;
+    if matches!(season.kind, SeasonKind::Spring) {
+        season.year += 1;
+    }
     season.user_action_resource = 4; // TODO: Needs to be different per season, probably
 }
 
