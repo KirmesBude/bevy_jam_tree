@@ -37,6 +37,11 @@ fn enter_credits(mut commands: Commands, soundtrack_assets: Res<SoundtrackAssets
             children.label("Bevy logo - All rights reserved by the Bevy Foundation. Permission granted for splash screen use when unmodified.");
             children.label("Music - CC BY 4.0 by Vindsvept");
 
+            children.header("Plugins");
+            children.label("bevy_rand - by Bluefinger");
+            children.label("bevy-inspector-egui - by jakobhellermann");
+            children.label("bevy_ecs_tilemap - by StarArawn");
+
             children.button("Back").insert(CreditsAction::Back);
         });
 

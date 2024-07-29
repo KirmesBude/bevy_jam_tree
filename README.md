@@ -1,5 +1,7 @@
 # Bevy Jam5 Tree
-This is my entry for bevy jam5 "cycles".
+This is my entry for bevy jam5 "cycles". It simulates the life cycle of trees/a forest.
+The game has some user action that certainly change the way the game plays out, but there is no real strategy with the implemented mechanics.
+Assets are not really finished, but considering I did them myself the end result would probably not be much better :D.
 
 ## License
 
@@ -10,4 +12,5 @@ The source code in this repository is licensed under any of the following at you
 
 ## Credits
 
-Some of the [assets](./assets) in this repository are 3rd-party. See the [credits screen](./src/screen/credits.rs) for more information.
+Some of the [assets](./assets) in this repository are 3rd-party. I also make use of the 
+See the [credits screen](./src/screen/credits.rs) for more information.
